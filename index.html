@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>🧠 GLOW Wallet Scanner</title>
-  <link rel="stylesheet" href="style.css" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🧠 SOLANA META SCANNER</title>
+  <link rel="stylesheet" href="style.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
@@ -12,33 +12,38 @@
     <h1>🧠 SOLANA META SCANNER</h1>
     <p>Scan with style. Powered by $GLOW</p>
 
-    <input type="text" id="walletInput" placeholder="Enter Solana Wallet Address" />
-    <div class="button-row">
+    <input type="text" id="walletInput" placeholder="Enter Wallet Address">
+    <div class="button-group">
       <button onclick="scanWallet()">🔍 Scan Wallet</button>
       <button onclick="exportCSV()">📁 Export CSV</button>
       <button onclick="toggleDarkMode()">🌗 Toggle Dark Mode</button>
     </div>
 
-    <input type="text" id="searchInput" onkeyup="filterTokens()" placeholder="🔎 Search Token" />
+    <input type="text" id="searchInput" placeholder="🔎 Search Token" onkeyup="filterTokens()">
 
-    <div id="solChartContainer">
-      <canvas id="solChart"></canvas>
-    </div>
+    <div id="walletData">
+      <p id="solBalance">💰 Native SOL Balance: Loading...</p>
+      <p id="totalWorth">💎 Estimated Total Wallet Worth: Loading...</p>
 
-    <div id="results">
-      <p id="nativeBalance"></p>
-      <ul id="tokenList"></ul>
-      <p id="totalWorth"></p>
-    </div>
+      <div id="tokenList">
+        <h3>🔹 Tokens:</h3>
+        <ul id="tokens"></ul>
+      </div>
 
-    <div>
-      <h2>📊 Portfolio Breakdown</h2>
-      <canvas id="portfolioChart"></canvas>
-    </div>
+      <div>
+        <h3>📊 Portfolio Breakdown</h3>
+        <canvas id="portfolioChart" width="400" height="400"></canvas>
+      </div>
 
-    <div>
-      <h2>🧠 AI Wallet Summary</h2>
-      <p id="aiSummary">Summary will appear here after scanning.</p>
+      <div>
+        <h3>🧠 AI Wallet Summary</h3>
+        <p id="aiSummary">Loading...</p>
+      </div>
+
+      <div>
+        <h3>📈 Real-time SOL Price Chart</h3>
+        <canvas id="solChart" width="600" height="300"></canvas>
+      </div>
     </div>
   </div>
 
