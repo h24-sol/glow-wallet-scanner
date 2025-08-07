@@ -1,61 +1,52 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>SOLANA META SCANNER</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>$GLOW – Solana Wallet Scanner</title>
   <link rel="stylesheet" href="style.css" />
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
+
 <body>
   <header>
-    <h1>SOLANA META SCANNER</h1>
-    <p>🚀 Analyze your wallet like never before</p>
+    <h1>🧠 SOLANA META SCANNER</h1>
+    <p>Scan with style. Powered by <strong>$GLOW</strong></p>
   </header>
 
-  <div class="actions">
-    <input type="text" id="walletInput" placeholder="Enter Solana wallet address..." />
-    <button id="scanBtn">Scan Wallet</button>
-    <button id="darkModeBtn">🌓 Toggle Dark Mode</button>
-    <button id="exportBtn">⬇️ Export CSV</button>
-  </div>
+  <main>
+    <section class="scanner">
+      <input type="text" id="walletInput" placeholder="Paste your wallet address here..." />
+      <button onclick="scanWallet()">🔍 Scan Wallet</button>
+    </section>
 
-  <div id="tokenSearch" class="actions">
-    <input type="text" placeholder="🔍 Search tokens..." />
-  </div>
+    <section class="results" id="results">
+      <!-- Wallet Data Will Be Displayed Here -->
+    </section>
+  </main>
 
-  <p id="errorMessage"></p>
-
-  <ul id="tokenList"></ul>
-
-  <div class="chart-container">
-    <canvas id="portfolioChart"></canvas>
-  </div>
-
-  <div class="chart-container">
-    <canvas id="solChart"></canvas>
-  </div>
-
-  <section class="features">
-    <h2>🔧 Features</h2>
+  <section class="about">
+    <h2>🧠 AI Wallet Summary</h2>
     <ul>
-      <li>✅ Real-time wallet scan</li>
-      <li>✅ SOL and token USD values</li>
-      <li>✅ Portfolio donut chart</li>
-      <li>✅ SOL price chart (live)</li>
-      <li>✅ Search + filter tokens</li>
-      <li>✅ Export wallet tokens to CSV</li>
-      <li>✅ Dark mode for comfort</li>
-      <li>✅ Mobile-first responsive design</li>
-      <li>✅ Animated charts for data clarity</li>
-      <li>✅ No logos, 100% custom identity</li>
+      <li>💼 Complete wallet portfolio scanner</li>
+      <li>📊 Visual portfolio breakdown with percentage</li>
+      <li>📈 Live SOL price chart</li>
+      <li>💵 Real USD token values</li>
+      <li>🔎 Token search & filter</li>
+      <li>🌗 Dark mode toggle</li>
+      <li>📁 CSV export support</li>
+      <li>📱 Fully responsive & mobile-first</li>
+      <li>🎨 Smooth animations & transitions</li>
+      <li>🧑‍💻 Open-source & GitHub hosted</li>
+      <li>🚀 Powered by Helius API</li>
     </ul>
   </section>
 
   <footer>
-    Built with ❤️ using Helius API — <a href="https://helius.xyz" target="_blank">Helius</a>
+    <p>Developed by MANISH • Contact: manis.programmer@gmail.com</p>
   </footer>
 
   <script src="script.js"></script>
 </body>
+
 </html>
