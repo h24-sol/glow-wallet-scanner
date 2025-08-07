@@ -2,32 +2,365 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Solana Wallet Scanner ($GLOW)</title>
-  <link rel="stylesheet" href="styles.css">
+
+  <!-- Google Fonts: Poppins -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet" />
+
+  <!-- Chart.js CDN -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    /* Reset & base */
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+      color: #e0e6f1;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+    }
+    h1 {
+      font-weight: 600;
+      color: #00ffd5;
+      margin-bottom: 10px;
+      letter-spacing: 2px;
+      text-shadow: 0 0 10px #00ffd5;
+    }
+    p {
+      margin-top: 0;
+      color: #b3d9d9;
+      font-size: 1rem;
+    }
+    input[type="text"] {
+      width: 320px;
+      max-width: 90vw;
+      padding: 12px 15px;
+      border-radius: 30px;
+      border: none;
+      outline: none;
+      font-size: 16px;
+      margin-top: 15px;
+      transition: box-shadow 0.3s ease;
+      box-shadow: inset 0 0 8px #00ffd5;
+      background: rgba(255 255 255 / 0.1);
+      color: #e0e6f1;
+    }
+    input[type="text"]:focus {
+      box-shadow: inset 0 0 12px #00ffd5, 0 0 8px #00ffd5;
+      background: rgba(255 255 255 / 0.15);
+    }
+    button {
+      margin-top: 15px;
+      padding: 12px 30px;
+      font-weight: 600;
+      font-size: 1rem;
+      border: none;
+      border-radius: 30px;
+      background: #00ffd5;
+      color: #203a43;
+      cursor: pointer;
+      box-shadow: 0 0 12px #00ffd5;
+      transition: background 0.3s ease, color 0.3s ease;
+    }
+    button:hover {
+      background: #00b8a9;
+      color: #e0e6f1;
+    }
+    #status {
+      margin-top: 20px;
+      font-weight: 600;
+      font-size: 1.1rem;
+      min-height: 24px;
+      color: #ffda79;
+      text-shadow: 0 0 4px #ffda79;
+    }
+    #results {
+      margin-top: 25px;
+      max-width: 900px;
+      width: 100%;
+      overflow-x: auto;
+      border-radius: 12px;
+      background: rgba(255 255 255 / 0.05);
+      box-shadow: 0 0 20px #00ffd5aa;
+      padding: 20px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      color: #cce7e7;
+    }
+    thead {
+      background: #00ffd5;
+      color: #203a43;
+      font-weight: 700;
+    }
+    th, td {
+      padding: 12px 15px;
+      border-bottom: 1px solid #00ffd544;
+      text-align: left;
+      font-variant-numeric: tabular-nums;
+    }
+    tbody tr:hover {
+      background: #00ffd533;
+    }
+    #charts {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 40px;
+      justify-content: center;
+      margin-top: 30px;
+      max-width: 900px;
+      width: 100%;
+    }
+    .chart-box {
+      background: rgba(255 255 255 / 0.05);
+      padding: 15px;
+      border-radius: 12px;
+      box-shadow: 0 0 20px #00ffd5aa;
+      flex: 1 1 400px;
+      min-width: 300px;
+    }
+    .chart-box h3 {
+      margin-top: 0;
+      color: #00ffd5;
+      text-align: center;
+      margin-bottom: 15px;
+      text-shadow: 0 0 6px #00ffd5;
+    }
+    footer {
+      margin-top: 50px;
+      font-size: 0.8rem;
+      color: #00ffd588;
+      text-align: center;
+      user-select: none;
+    }
+    @media (max-width: 500px) {
+      input[type="text"] { width: 100%; }
+      button { width: 100%; }
+    }
+  </style>
 </head>
 <body>
-  <header>
-    <h1>Solana Wallet Scanner ($GLOW)</h1>
-    <p>Developed by MANISH | Email: manis.programmer@gmail.com</p>
-  </header>
-
-  <main>
-    <div class="scanner">
-      <input type="text" id="walletAddress" placeholder="Paste a Solana wallet address">
-      <button id="scanButton">🔍 Scan Wallet</button>
+  <h1>Solana Wallet Scanner ($GLOW)</h1>
+  <p>Paste a Solana wallet address below and click <b>Scan Wallet</b>:</p>
+  <input type="text" id="walletInput" placeholder="Paste Solana wallet address here" autocomplete="off" />
+  <button id="scanBtn">Scan Wallet</button>
+  <div id="status"></div>
+  <div id="results"></div>
+  <div id="charts">
+    <div class="chart-box">
+      <h3>Live SOL Price Chart</h3>
+      <canvas id="solPriceChart"></canvas>
     </div>
+    <div class="chart-box">
+      <h3>Token Holdings Pie Chart</h3>
+      <canvas id="assetPieChart"></canvas>
+    </div>
+  </div>
+  <footer>
+    Developed by MANISH &nbsp;&bull;&nbsp; Email: manis.programmer@gmail.com &nbsp;&bull;&nbsp; $GLOW
+  </footer>
 
-    <div id="walletInfo" class="info-box hidden"></div>
+  <script>
+    const HELIUS_API_KEY = "a301848c-a27a-4b00-a2b1-7e0afab088a2";
 
-    <h2>Live SOL Price Chart</h2>
-    <canvas id="solPriceChart"></canvas>
+    // Mapping common Solana token mints to CoinGecko ids for price fetch
+    const mintToCoingecko = {
+      "So11111111111111111111111111111111111111112": "solana",
+      "Es9vMFrzaCERWLzWfpHoUFR6Jxgxewqksx5FiNfAuVQ": "usd-coin",
+      "9n4nbM75f5Ui33ZbPYXn59EwSgE8CGsHtAeTH5YFeJ9E": "bitcoin",
+      // Add more tokens here if needed
+    };
 
-    <h2>Token Holdings Pie Chart</h2>
-    <canvas id="tokenPieChart"></canvas>
-  </main>
+    const statusDiv = document.getElementById("status");
+    const resultsDiv = document.getElementById("results");
+    const walletInput = document.getElementById("walletInput");
+    const scanBtn = document.getElementById("scanBtn");
 
-  <script src="script.js"></script>
-</body>
-</html>
+    let solPriceChart = null;
+    let assetPieChart = null;
+
+    // Fetch assets from Helius API for the given wallet
+    async function fetchHeliusAssets(walletAddress) {
+      const url = `https://api.helius.xyz/v0/addresses/${walletAddress}/balances?api-key=${HELIUS_API_KEY}`;
+      const response = await fetch(url);
+      if(!response.ok) {
+        throw new Error(`Helius API error: ${response.status} ${response.statusText}`);
+      }
+      const data = await response.json();
+      return data; // Array of token balances
+    }
+
+    // Fetch Solana wallet info like creation date & transaction count
+    async function fetchWalletInfo(walletAddress) {
+      const url = `https://api.helius.xyz/v0/addresses/${walletAddress}/transactions?limit=1&api-key=${HELIUS_API_KEY}`;
+      const response = await fetch(url);
+      if(!response.ok) {
+        throw new Error(`Helius API error: ${response.status} ${response.statusText}`);
+      }
+      const txs = await response.json();
+      // First transaction timestamp is approximate creation date
+      if(txs.length === 0) return { creationDate: "N/A", totalTransactions: 0 };
+      const firstTx = txs[0];
+      const creationDate = new Date(firstTx.timestamp * 1000).toLocaleDateString();
+      // Fetch total transactions count separately (Helius doesn't provide total tx count in a single call easily)
+      // So here, just return totalTransactions as length fetched (could be improved)
+      return { creationDate, totalTransactions: txs.length };
+    }
+
+    // Fetch recent transactions (last 10)
+    async function fetchRecentTransactions(walletAddress) {
+      const url = `https://api.helius.xyz/v0/addresses/${walletAddress}/transactions?limit=10&api-key=${HELIUS_API_KEY}`;
+      const response = await fetch(url);
+      if(!response.ok) {
+        throw new Error(`Helius API error: ${response.status} ${response.statusText}`);
+      }
+      const data = await response.json();
+      return data;
+    }
+
+    // Fetch SOL price history (last 24h) from CoinGecko for chart
+    async function fetchSolPriceHistory() {
+      const url = 'https://api.coingecko.com/api/v3/coins/solana/market_chart?vs_currency=usd&days=1&interval=hourly';
+      const response = await fetch(url);
+      const data = await response.json();
+      return data.prices; // Array of [timestamp, price]
+    }
+
+    // Fetch token price by CoinGecko id
+    async function fetchTokenPrice(id) {
+      const url = `https://api.coingecko.com/api/v3/simple/price?ids=${id}&vs_currencies=usd`;
+      const response = await fetch(url);
+      const data = await response.json();
+      return data[id]?.usd || 0;
+    }
+
+    // Utility: format Unix timestamp to readable string
+    function formatTimestamp(ts) {
+      const d = new Date(ts * 1000);
+      return d.toLocaleString();
+    }
+
+    // Generate a random pastel color
+    function randomColor() {
+      const baseHue = 174; // cyan/aqua
+      const hue = baseHue + (Math.random() * 40 - 20);
+      const saturation = 80 + Math.random() * 20;
+      const lightness = 60 + Math.random() * 20;
+      return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+    }
+
+    // Draw SOL price line chart
+    async function drawSolPriceChart() {
+      const ctx = document.getElementById('solPriceChart').getContext('2d');
+      const prices = await fetchSolPriceHistory();
+
+      const labels = prices.map(p => new Date(p[0]).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}));
+      const data = prices.map(p => p[1]);
+
+      if(solPriceChart) solPriceChart.destroy();
+
+      solPriceChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [{
+            label: 'SOL Price (USD)',
+            data,
+            borderColor: '#00ffd5',
+            backgroundColor: 'rgba(0, 255, 213, 0.2)',
+            fill: true,
+            tension: 0.3,
+            pointRadius: 0,
+          }]
+        },
+        options: {
+          responsive: true,
+          scales: {
+            y: { ticks: { color: '#00ffd5' }, grid: { color: '#00ffd533' } },
+            x: { ticks: { color: '#00ffd5' }, grid: { color: '#00ffd533' } }
+          },
+          plugins: { legend: { labels: { color: '#00ffd5' } } }
+        }
+      });
+    }
+
+    // Draw pie chart for token holdings
+    function drawAssetPieChart(labels, values, colors) {
+      const ctx = document.getElementById('assetPieChart').getContext('2d');
+
+      if(assetPieChart) assetPieChart.destroy();
+
+      assetPieChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels,
+          datasets: [{
+            data: values,
+            backgroundColor: colors,
+            borderColor: '#203a43',
+            borderWidth: 2,
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { position: 'bottom', labels: { color: '#00ffd5' } },
+            tooltip: {
+              callbacks: {
+                label: ctx => `${ctx.label}: $${ctx.raw.toFixed(2)}`
+              }
+            }
+          }
+        }
+      });
+    }
+
+    // Main function to scan wallet
+    async function scanWallet() {
+      const walletAddress = walletInput.value.trim();
+      if(!walletAddress) {
+        statusDiv.textContent = "Please enter a valid Solana wallet address.";
+        return;
+      }
+
+      statusDiv.textContent = "Fetching wallet data...";
+      resultsDiv.innerHTML = "";
+      scanBtn.disabled = true;
+      scanBtn.textContent = "Scanning...";
+
+      try {
+        // Fetch wallet assets and info in parallel
+        const [assets, walletInfo, recentTxs] = await Promise.all([
+          fetchHeliusAssets(walletAddress),
+          fetchWalletInfo(walletAddress),
+          fetchRecentTransactions(walletAddress)
+        ]);
+
+        // Calculate total USD value of wallet
+        let totalValue = 0;
+        let tableRows = "";
+
+        // For pie chart
+        let pieLabels = [];
+        let pieValues = [];
+        let pieColors = [];
+
+        for(const asset of assets) {
+          const mint = asset.mint;
+          const amountRaw = Number(asset.amount || 0);
+          const decimals = asset.decimals || 0;
+          const amount = amountRaw / (10 ** decimals);
+
+          let price = 0;
+          const coingeckoId = mintToCoingecko[mint];
+          if(coingeckoId) {
+            price = await fetchTokenPrice(coingeckoId);
+          }
+          const usdValue =
