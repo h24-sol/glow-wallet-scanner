@@ -1,34 +1,28 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8">
   <title>🧠 GLOW Wallet Scanner</title>
-  <link rel="stylesheet" href="style.css" />
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <header>
+  <div class="container">
     <h1>🧠 SOLANA META SCANNER</h1>
-    <p>Scan with style. Powered by <strong>$GLOW</strong></p>
-  </header>
+    <p>Scan with style. Powered by $GLOW</p>
 
-  <main>
-    <input type="text" id="wallet" placeholder="Enter Solana Wallet Address" />
-    <button id="scanBtn">🔍 Scan Wallet</button>
-    <button id="exportBtn">📁 Export CSV</button>
-    <button id="darkToggle">🌓 Toggle Dark Mode</button>
+    <input type="text" id="walletInput" placeholder="Enter Solana wallet address" />
+    <div class="buttons">
+      <button id="scanBtn">🔍 Scan Wallet</button>
+      <button id="exportBtn">📁 Export CSV</button>
+      <button id="toggleDark">🌗 Toggle Dark Mode</button>
+    </div>
+
     <input type="text" id="searchInput" placeholder="🔎 Search Token" />
 
-    <section id="result">🔄 Awaiting scan...</section>
+    <div id="result"></div>
+  </div>
 
-    <canvas id="chart" width="400" height="400"></canvas>
-  </main>
-
-  <footer>
-    <p>Made with ❤️ for Solana users | GLOW Wallet Scanner</p>
-  </footer>
-
+  <!-- Make sure script is at the end -->
   <script src="script.js"></script>
 </body>
 </html>
