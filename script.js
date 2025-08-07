@@ -1,139 +1,120 @@
-const scanBtn = document.getElementById("scanBtn");
-const walletInput = document.getElementById("wallet");
+const HELIUS_API_KEY = "c96a3c81-a711-4d05-8d98-19de7f38722b";
+const scanBtn = document.getElementById("scan-btn");
 const resultSection = document.getElementById("result");
-const exportBtn = document.getElementById("exportBtn");
-const darkToggle = document.getElementById("darkToggle");
-const searchInput = document.getElementById("searchInput");
+const walletInput = document.getElementById("wallet-input");
+const toggleDark = document.getElementById("toggle-dark");
+const exportBtn = document.getElementById("export-btn");
+const tokenSearch = document.getElementById("token-search");
 
-const HELIUS_API_KEY = "c96a3c81-a711-4d05-8d98-19de7f38722b"; // your API
-const COIN_API = "https://price.jup.ag/v4/price?ids=";
+let tokensGlobal = [];
 
-let allTokens = [];
-
-scanBtn.addEventListener("click", scanWallet);
-exportBtn.addEventListener("click", exportCSV);
-darkToggle.addEventListener("click", () => {
-  document.body.classList.toggle("dark");
+toggleDark.addEventListener("click", () => {
+  document.body.classList.toggle("dark-mode");
 });
-searchInput.addEventListener("input", () => displayTokens(allTokens));
 
-async function scanWallet() {
+scanBtn.addEventListener("click", async () => {
   const address = walletInput.value.trim();
-  if (!address) return alert("Please enter a wallet address");
+  if (!address) {
+    alert("Please enter a wallet address.");
+    return;
+  }
 
-  resultSection.innerHTML = "🔄 Scanning...";
-
+  resultSection.innerHTML = "⏳ Scanning wallet...";
   try {
-    const response = await fetch(`https://api.helius.xyz/v0/addresses/${address}/balances?api-key=${HELIUS_API_KEY}`);
-    const data = await response.json();
+    const res = await fetch(`https://api.helius.xyz/v0/addresses/${address}/balances?api-key=${HELIUS_API_KEY}`);
+    const data = await res.json();
 
     const tokens = data.tokens || [];
-    const native = data.nativeBalance / 1e9;
+    const nativeBalanceLamports = data.nativeBalance || 0;
+    const sol = nativeBalanceLamports / 1e9;
 
-    let html = `<p>💰 Native SOL Balance: ${native.toFixed(4)} SOL</p><ul>`;
-    let totalUSD = 0;
+    tokensGlobal = tokens.map(token => ({
+      mint: token.mint,
+      amount: token.amount / Math.pow(10, token.decimals || 0)
+    }));
 
-    // Get prices for tokens
-    const mints = tokens.map(t => t.mint).join(",");
-    const priceRes = await fetch(`${COIN_API}${mints}`);
-    const prices = await priceRes.json();
+    const solPrice = await fetchSolPrice();
+    const totalUsd = sol * solPrice;
 
-    allTokens = tokens.map(t => {
-      const amount = t.amount / Math.pow(10, t.decimals || 0);
-      const usd = prices.data?.[t.mint]?.price || 0;
-      const isScam = amount > 10000 && usd < 0.00001;
-      const isAirdrop = amount > 5000 && usd === 0;
+    let html = `💰 Native SOL Balance: ${sol.toFixed(4)} SOL ($${(sol * solPrice).toFixed(2)})<br><br>`;
+    html += `🔹 Tokens:<br>`;
 
-      return {
-        ...t,
-        amount,
-        usd,
-        isScam,
-        isAirdrop
-      };
+    tokensGlobal.forEach((t, i) => {
+      html += `- Token Mint: ${t.mint}<br>`;
+      html += `  Amount: ${t.amount.toFixed(4)}<br><br>`;
     });
 
-    const filtered = allTokens.filter(matchSearch);
-    filtered.forEach(t => {
-      const line = `
-        <li>
-          ${t.isScam ? "⚠️ SCAM" : ""} ${t.isAirdrop ? "🎁 Airdrop" : ""}
-          <br>- Token Mint: ${t.mint}
-          <br>  Amount: ${t.amount.toFixed(4)}
-          <br>  USD: ~$${(t.amount * t.usd).toFixed(4)}
-        </li><br>
-      `;
-      html += line;
-      totalUSD += t.amount * t.usd;
-    });
+    html += `💎 Estimated Total Wallet Worth: ~$${totalUsd.toFixed(2)} USD<br>`;
 
-    html += `</ul><p>💎 Estimated Total Wallet Worth: ~$${totalUSD.toFixed(2)} USD</p>`;
-    html += getSummary(native, totalUSD, allTokens.length);
     resultSection.innerHTML = html;
+    drawChart(tokensGlobal);
 
-    drawChart(allTokens);
-  } catch (e) {
-    resultSection.innerHTML = "❌ Error scanning wallet";
-    console.error(e);
+  } catch (err) {
+    console.error("Fetch failed:", err);
+    resultSection.innerHTML = "❌ Failed to fetch wallet data. Check API key or try again.";
+  }
+});
+
+async function fetchSolPrice() {
+  try {
+    const res = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd");
+    const data = await res.json();
+    return data.solana.usd || 0;
+  } catch {
+    return 0;
   }
 }
 
-function drawChart(tokens) {
-  const ctx = document.getElementById("chart").getContext("2d");
-  const labels = tokens.map(t => t.mint.slice(0, 4) + "..." + t.mint.slice(-4));
-  const data = tokens.map(t => (t.amount * t.usd));
+exportBtn.addEventListener("click", () => {
+  if (tokensGlobal.length === 0) {
+    alert("No tokens to export.");
+    return;
+  }
 
-  if (window.pieChart) window.pieChart.destroy();
-  window.pieChart = new Chart(ctx, {
-    type: "pie",
-    data: {
-      labels,
-      datasets: [{
-        data,
-        borderWidth: 1
-      }]
-    }
-  });
-}
-
-function exportCSV() {
-  if (!allTokens.length) return;
-
-  const csv = [
-    ["Mint", "Amount", "USD Value"]
+  const rows = [
+    ["Token Mint", "Amount"],
+    ...tokensGlobal.map(t => [t.mint, t.amount.toFixed(4)])
   ];
 
-  allTokens.forEach(t => {
-    csv.push([t.mint, t.amount.toFixed(4), (t.amount * t.usd).toFixed(4)]);
-  });
-
-  const blob = new Blob([csv.map(r => r.join(",")).join("\n")], { type: "text/csv" });
+  const csv = rows.map(row => row.join(",")).join("\n");
+  const blob = new Blob([csv], { type: "text/csv" });
   const url = URL.createObjectURL(blob);
 
   const a = document.createElement("a");
   a.href = url;
-  a.download = "wallet_data.csv";
+  a.download = "wallet_tokens.csv";
   a.click();
-}
+});
 
-function getSummary(sol, usd, tokenCount) {
-  return `
-    <p>🧠 AI Wallet Summary:</p>
-    <ul>
-      <li>📦 Token count: ${tokenCount}</li>
-      <li>💸 USD Total: ~$${usd.toFixed(2)}</li>
-      <li>🔐 SOL Balance: ${sol.toFixed(4)} SOL</li>
-      <li>⚠️ Scam tokens: ${allTokens.filter(t => t.isScam).length}</li>
-      <li>🎁 Airdrops: ${allTokens.filter(t => t.isAirdrop).length}</li>
-    </ul>
-  `;
-}
+tokenSearch.addEventListener("input", () => {
+  const q = tokenSearch.value.toLowerCase();
+  const filtered = tokensGlobal.filter(t => t.mint.toLowerCase().includes(q));
+  resultSection.innerHTML = `🔹 Tokens:<br>`;
+  filtered.forEach(t => {
+    resultSection.innerHTML += `- Token Mint: ${t.mint}<br>Amount: ${t.amount.toFixed(4)}<br><br>`;
+  });
+});
 
-function matchSearch(token) {
-  const q = searchInput.value.toLowerCase();
-  return token.mint.toLowerCase().includes(q);
-}
+function drawChart(data) {
+  const ctx = document.getElementById("token-chart").getContext("2d");
+  if (window.tokenChart) window.tokenChart.destroy();
 
-function displayTokens(tokens) {
-  scanWallet();
+  window.tokenChart = new Chart(ctx, {
+    type: "pie",
+    data: {
+      labels: data.map(t => t.mint.slice(0, 4) + "..." + t.mint.slice(-4)),
+      datasets: [{
+        data: data.map(t => t.amount),
+        backgroundColor: data.map(() => `hsl(${Math.random() * 360}, 70%, 60%)`)
+      }]
+    },
+    options: {
+      plugins: {
+        legend: {
+          display: true,
+          position: "bottom"
+        }
+      }
+    }
+  });
 }
