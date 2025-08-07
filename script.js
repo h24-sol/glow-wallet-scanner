@@ -1,147 +1,167 @@
-const HELIUS_API_KEY = "a2fb8074-3461-480a-a202-159d980fd02a";
-const SOL_PRICE_API = "https://price.jup.ag/v4/price?ids=SOL";
+const apiKey = 'a2fb8074-3461-480a-a202-159d980fd02a';
+const baseURL = `https://api.helius.xyz/v0/addresses`;
+const solanaPriceAPI = `https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd`;
+
+document.getElementById("scanBtn").addEventListener("click", scanWallet);
+document.getElementById("darkModeBtn").addEventListener("click", toggleDarkMode);
+document.getElementById("exportBtn").addEventListener("click", exportCSV);
+document.getElementById("tokenSearch").addEventListener("input", filterTokens);
 
 async function scanWallet() {
-  const wallet = document.getElementById("walletInput").value.trim();
-  if (!wallet) return showError("Please enter a wallet address");
+  const address = document.getElementById("walletInput").value.trim();
+  const errorMessage = document.getElementById("errorMessage");
+  errorMessage.textContent = "";
 
-  clearUI();
+  if (!address) {
+    errorMessage.textContent = "⚠️ Please enter a wallet address.";
+    return;
+  }
+
   try {
-    const response = await fetch(`https://api.helius.xyz/v0/addresses/${wallet}/tokens?api-key=${HELIUS_API_KEY}`);
-    const data = await response.json();
-    if (!data.tokens) return showError("❌ Failed to load data");
+    const tokenRes = await fetch(`${baseURL}/${address}/balances?api-key=${apiKey}`);
+    const tokenData = await tokenRes.json();
 
-    const sol = data.nativeBalance / 1e9;
-    const tokens = data.tokens.filter(t => t.amount > 0);
-    const solPrice = await getSolPrice();
-    const tokenListEl = document.getElementById("tokenList");
-
-    const portfolio = tokens.map(t => {
-      const amount = t.amount / Math.pow(10, t.decimals);
-      return {
-        ...t,
-        displayAmount: amount,
-        displayValue: amount * solPrice
-      };
-    });
-
-    let totalValue = sol * solPrice + portfolio.reduce((sum, t) => sum + t.displayValue, 0);
-
-    portfolio.forEach(t => {
-      const li = document.createElement("li");
-      const percent = ((t.displayValue / totalValue) * 100).toFixed(2);
-      li.textContent = `${t.mint.slice(0, 4)}...${t.mint.slice(-4)} - $${t.displayValue.toFixed(2)} (${percent}%)`;
-      tokenListEl.appendChild(li);
-    });
-
-    if (sol > 0) {
-      const li = document.createElement("li");
-      const solValue = sol * solPrice;
-      const percent = ((solValue / totalValue) * 100).toFixed(2);
-      li.textContent = `SOL - $${solValue.toFixed(2)} (${percent}%)`;
-      tokenListEl.insertBefore(li, tokenListEl.firstChild);
+    if (!tokenData.tokens) {
+      throw new Error("Invalid response structure");
     }
 
-    drawPortfolioChart(portfolio, sol * solPrice);
-    drawSolChart();
+    const solRes = await fetch(solanaPriceAPI);
+    const solData = await solRes.json();
+    const solPrice = solData.solana?.usd || 0;
+
+    displayTokens(tokenData.tokens, solPrice);
+    updateCharts(tokenData.tokens, solPrice);
   } catch (err) {
-    showError("❌ Failed to fetch wallet data");
+    errorMessage.textContent = `❌ Failed to load data`;
+    console.error(err);
   }
 }
 
-function showError(msg) {
-  document.getElementById("errorMessage").textContent = msg;
-}
+function displayTokens(tokens, solPrice) {
+  const list = document.getElementById("tokenList");
+  list.innerHTML = "";
 
-function clearUI() {
-  document.getElementById("tokenList").innerHTML = "";
-  document.getElementById("errorMessage").textContent = "";
-}
+  const filtered = tokens.filter(t => t.amount > 0 && t.mint);
+  let totalUSD = 0;
 
-function filterTokens() {
-  const filter = document.getElementById("searchInput").value.toLowerCase();
-  const list = document.getElementById("tokenList").getElementsByTagName("li");
-  for (let item of list) {
-    const txt = item.textContent.toLowerCase();
-    item.style.display = txt.includes(filter) ? "" : "none";
-  }
-}
+  const tokenElements = filtered.map(token => {
+    const amount = token.amount / Math.pow(10, token.decimals || 0);
+    const valueUSD = token.price ? (amount * token.price) : 0;
+    totalUSD += valueUSD;
 
-function exportCSV() {
-  const rows = [["Token", "Value (USD)"]];
-  document.querySelectorAll("#tokenList li").forEach(li => {
-    const parts = li.textContent.split(" - ");
-    if (parts.length === 2) rows.push([parts[0], parts[1]]);
+    return {
+      ...token,
+      displayName: token.tokenName || token.tokenSymbol || token.mint.slice(0, 6),
+      amount,
+      valueUSD
+    };
   });
 
-  let csv = rows.map(row => row.join(",")).join("\n");
-  const blob = new Blob([csv], { type: "text/csv" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "wallet_data.csv";
-  a.click();
+  tokenElements.forEach(token => {
+    const li = document.createElement("li");
+    li.innerHTML = `
+      <span>${token.displayName}</span>
+      <span>${token.amount.toFixed(4)}</span>
+      <span>$${token.valueUSD.toFixed(2)}</span>
+    `;
+    list.appendChild(li);
+  });
+}
+
+function updateCharts(tokens, solPrice) {
+  const chartData = tokens
+    .filter(t => t.amount > 0)
+    .map(t => {
+      const amount = t.amount / Math.pow(10, t.decimals || 0);
+      const usdValue = (t.price ?? 0) * amount;
+      return {
+        name: t.tokenName || t.tokenSymbol || t.mint.slice(0, 6),
+        value: usdValue
+      };
+    })
+    .filter(t => t.value > 0);
+
+  const ctx = document.getElementById("portfolioChart").getContext("2d");
+  if (window.portfolioChart) window.portfolioChart.destroy();
+
+  window.portfolioChart = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: chartData.map(c => c.name),
+      datasets: [{
+        data: chartData.map(c => c.value),
+        backgroundColor: chartData.map(() =>
+          `hsl(${Math.floor(Math.random() * 360)}, 70%, 60%)`
+        )
+      }]
+    },
+    options: {
+      plugins: {
+        title: {
+          display: true,
+          text: '📊 Portfolio Breakdown',
+          font: { size: 18, weight: 'bold' }
+        }
+      }
+    }
+  });
+
+  // SOL price chart (example)
+  const solCtx = document.getElementById("solChart").getContext("2d");
+  if (window.solChart) window.solChart.destroy();
+
+  window.solChart = new Chart(solCtx, {
+    type: 'bar',
+    data: {
+      labels: ['Current'],
+      datasets: [{
+        label: 'SOL/USD',
+        data: [solPrice],
+        backgroundColor: '#00cc99'
+      }]
+    },
+    options: {
+      plugins: {
+        title: {
+          display: true,
+          text: '📉 SOL Price',
+          font: { size: 16, weight: 'bold' }
+        }
+      },
+      scales: {
+        y: { beginAtZero: true }
+      }
+    }
+  });
 }
 
 function toggleDarkMode() {
   document.body.classList.toggle("dark-mode");
 }
 
-async function getSolPrice() {
-  const res = await fetch(SOL_PRICE_API);
-  const json = await res.json();
-  return json.data.SOL.price || 0;
-}
-
-async function drawSolChart() {
-  try {
-    const res = await fetch("https://price.jup.ag/v1/price-history?id=SOL&span=24h");
-    const { data } = await res.json();
-    const labels = data.map(p => new Date(p.timestamp * 1000).toLocaleTimeString());
-    const prices = data.map(p => p.price);
-
-    new Chart(document.getElementById("solChart"), {
-      type: "line",
-      data: {
-        labels,
-        datasets: [{
-          label: "SOL Price (24h)",
-          data: prices,
-          fill: false,
-          borderColor: "#00cc99",
-          tension: 0.1
-        }]
-      },
-      options: {
-        responsive: true,
-        plugins: {
-          legend: { display: false }
-        }
-      }
-    });
-  } catch {
-    showError("❌ Failed to load SOL price chart");
-  }
-}
-
-function drawPortfolioChart(tokens, solUSD) {
-  const labels = ["SOL", ...tokens.map(t => t.mint.slice(0, 4) + "..." + t.mint.slice(-4))];
-  const values = [solUSD, ...tokens.map(t => t.displayValue)];
-
-  new Chart(document.getElementById("portfolioChart"), {
-    type: "doughnut",
-    data: {
-      labels,
-      datasets: [{
-        data: values,
-        borderWidth: 1
-      }]
-    },
-    options: {
-      responsive: true,
-      plugins: {
-        legend: { position: "bottom" }
-      }
-    }
+function filterTokens(e) {
+  const query = e.target.value.toLowerCase();
+  const items = document.querySelectorAll("#tokenList li");
+  items.forEach(item => {
+    item.style.display = item.textContent.toLowerCase().includes(query)
+      ? ""
+      : "none";
   });
+}
+
+function exportCSV() {
+  const rows = [["Token", "Amount", "Value (USD)"]];
+  document.querySelectorAll("#tokenList li").forEach(li => {
+    const cols = li.querySelectorAll("span");
+    const row = Array.from(cols).map(span => span.textContent);
+    rows.push(row);
+  });
+
+  let csvContent = "data:text/csv;charset=utf-8," + rows.map(e => e.join(",")).join("\n");
+  const link = document.createElement("a");
+  link.setAttribute("href", encodeURI(csvContent));
+  link.setAttribute("download", "wallet_tokens.csv");
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
 }
