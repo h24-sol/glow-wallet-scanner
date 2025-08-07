@@ -1,87 +1,147 @@
+/* style.css */
 body {
-  font-family: 'Segoe UI', sans-serif;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #f9f9f9;
+  color: #111;
   margin: 0;
-  background: url('https://cryptologos.cc/logos/solana-sol-logo.png') no-repeat center center fixed;
-  background-size: cover;
-  color: #ffffff;
+  padding: 0;
   transition: background 0.3s, color 0.3s;
 }
 
-.container {
-  background-color: rgba(0, 0, 0, 0.85);
-  padding: 2rem;
-  max-width: 960px;
-  margin: auto;
-  border-radius: 16px;
-  margin-top: 2rem;
+.dark-mode {
+  background-color: #121212;
+  color: #eee;
 }
 
-h1.headline {
-  font-size: 3rem;
-  color: #00ffa3;
-  text-shadow: 2px 2px 5px #000;
-  font-weight: 900;
-  letter-spacing: 1px;
+header {
+  background-color: #00ff9d;
+  color: #000;
+  padding: 20px;
   text-align: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  position: sticky;
+  top: 0;
+  z-index: 1000;
 }
 
-.tagline {
-  font-weight: bold;
-  text-align: center;
-  margin-bottom: 2rem;
-  color: #ccc;
+header .logo {
+  width: 60px;
+  vertical-align: middle;
+  border-radius: 50%;
+  margin-bottom: 10px;
+  animation: spin 5s linear infinite;
 }
 
-.tagline span {
-  color: #00ffa3;
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+h1 {
+  font-size: 2rem;
+  margin: 10px 0 5px;
+}
+
+.actions, #tokenSearch {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 20px;
 }
 
 input[type="text"] {
   padding: 10px;
-  width: 100%;
-  margin: 10px 0;
-  border: none;
+  width: 250px;
   border-radius: 5px;
-}
-
-.buttons {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-bottom: 1rem;
+  border: 1px solid #ccc;
 }
 
 button {
-  flex: 1;
-  padding: 10px;
-  background-color: #00ffa3;
-  color: #000;
+  padding: 10px 15px;
   border: none;
-  font-weight: bold;
+  background-color: #4caf50;
+  color: white;
   border-radius: 5px;
   cursor: pointer;
+  transition: background 0.2s;
 }
 
 button:hover {
-  background-color: #00cc88;
+  background-color: #388e3c;
 }
 
-ul#tokenList {
-  list-style: none;
+#errorMessage {
+  color: red;
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+section {
+  padding: 10px 20px;
+}
+
+ul {
+  list-style-type: none;
   padding: 0;
 }
 
-ul#tokenList li {
-  padding: 10px;
-  border-bottom: 1px solid #444;
+li {
+  margin: 8px 0;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+li img {
+  vertical-align: middle;
+  border-radius: 50%;
+}
+
+.chart-container {
+  max-width: 600px;
+  margin: 30px auto;
+  padding: 20px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  transition: background 0.3s;
+}
+
+.dark-mode .chart-container {
+  background: #1e1e1e;
 }
 
 canvas {
   max-width: 100%;
-  margin: 1rem 0;
 }
 
-.dark-mode {
-  background-color: #111;
-  color: #eee;
+footer {
+  text-align: center;
+  padding: 20px;
+  font-size: 0.9rem;
+  background: #f1f1f1;
+  margin-top: 40px;
+  transition: background 0.3s;
+}
+
+.dark-mode footer {
+  background: #1a1a1a;
+  color: #aaa;
+}
+
+@media (max-width: 600px) {
+  h1 {
+    font-size: 1.5rem;
+  }
+
+  .actions, #tokenSearch {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  input[type="text"] {
+    width: 90%;
+  }
 }
