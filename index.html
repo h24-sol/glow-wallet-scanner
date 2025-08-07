@@ -1,43 +1,46 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>🧠 GLOW Wallet Scanner</title>
-  <link rel="stylesheet" href="style.css" />
+  <meta charset="UTF-8">
+  <title>🧑‍🧠 SOLANA META SCANNER</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <div class="container">
-    <h1>🧠 SOLANA META SCANNER</h1>
-    <p class="subtitle">Scan with style. Powered by $GLOW</p>
-    <input type="text" id="walletInput" placeholder="Enter wallet address">
-    <div class="button-row">
-      <button onclick="scanWallet()">🔍 Scan Wallet</button>
-      <button onclick="exportCSV()">📁 Export CSV</button>
-      <button onclick="toggleDarkMode()">🌗 Toggle Dark Mode</button>
+    <h1>🧑‍🧠 SOLANA META SCANNER</h1>
+    <p class="tagline">Scan with style. Powered by $GLOW</p>
+
+    <input type="text" id="walletAddress" placeholder="Enter Solana Wallet Address">
+    <button onclick="scanWallet()">🔍 Scan Wallet</button>
+    <button onclick="exportToCSV()">📁 Export CSV</button>
+    <button onclick="toggleDarkMode()">🌗 Toggle Dark Mode</button>
+
+    <input type="text" id="searchToken" placeholder="🔎 Search Token" oninput="filterTokens()">
+
+    <div id="loading">Loading...</div>
+
+    <div id="walletInfo">
+      <p id="solBalance">💰 Native SOL Balance: </p>
+      <p id="totalWorth">💎 Estimated Total Wallet Worth: </p>
+      <div id="tokenList">
+        <h3>🔹 Tokens:</h3>
+        <ul id="tokens"></ul>
+      </div>
     </div>
-    <input type="text" id="searchInput" placeholder="🔎 Search Token" onkeyup="searchToken()"/>
-    
-    <div id="result">
-      <p id="nativeBalance"></p>
-      <div id="tokenList"></div>
-      <p id="totalWorth"></p>
 
-      <div id="charts">
-        <div>
-          <h3>📊 Portfolio Breakdown</h3>
-          <canvas id="portfolioChart"></canvas>
-        </div>
-        <div>
-          <h3>📉 SOL Price Chart</h3>
-          <canvas id="solPriceChart"></canvas>
-        </div>
-      </div>
+    <div id="portfolioSection">
+      <h3>📊 Portfolio Breakdown</h3>
+      <canvas id="portfolioChart"></canvas>
+    </div>
 
-      <div id="aiSummary">
-        <h3>🧠 AI Wallet Summary</h3>
-        <p id="summaryText">AI summary loading...</p>
-      </div>
+    <div id="priceChartSection">
+      <h3>📉 SOL Price Chart</h3>
+      <canvas id="solPriceChart"></canvas>
+    </div>
+
+    <div id="aiSummary">
+      <h3>🧠 AI Wallet Summary</h3>
+      <p id="summaryText">AI summary loading...</p>
     </div>
   </div>
 
