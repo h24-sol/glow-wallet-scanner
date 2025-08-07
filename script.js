@@ -1,111 +1,94 @@
-const HELIUS_API_KEY = "a711-4d05-8d98-19de7f38722b";
+const API_KEY = "2fb8074-3461-480a-a202-159d980fd02a";
 
-// Minimal token mint to Coingecko ID map (expand as needed)
-const mintToCoingecko = {
-  "So11111111111111111111111111111111111111112": "solana",
-  "Es9vMFrzaCERWLzWfpHoUFR6Jxgxewqksx5FiNfAuVQ": "usd-coin",
-  "9n4nbM75f5Ui33ZbPYXn59EwSgE8CGsHtAeTH5YFeJ9E": "bitcoin",
-};
+async function fetchWalletData() {
+  const address = document.getElementById("walletInput").value.trim();
+  const resultDiv = document.getElementById("result");
+  resultDiv.innerHTML = "";
 
-async function getWalletAssets(walletAddress) {
-  const url = `https://mainnet.helius-rpc.com/?api-key=${HELIUS_API_KEY}`;
-  const body = {
-    jsonrpc: "2.0",
-    id: "searchAssets",
-    method: "searchAssets",
-    params: {
-      ownerAddress: walletAddress,
-      tokenType: "fungible",
-      displayOptions: { showNativeBalance: true }
-    }
-  };
-
-  const response = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body)
-  });
-
-  const data = await response.json();
-  if(data.error) throw new Error(data.error.message);
-  return data.result;
-}
-
-async function getTokenPriceCoingecko(tokenId) {
-  const url = `https://api.coingecko.com/api/v3/simple/price?ids=${tokenId}&vs_currencies=usd`;
-  const res = await fetch(url);
-  const data = await res.json();
-  return data[tokenId]?.usd || 0;
-}
-
-async function scanWallet() {
-  const walletInput = document.getElementById("walletInput").value.trim();
-  const statusDiv = document.getElementById("status");
-  const resultsDiv = document.getElementById("results");
-  resultsDiv.innerHTML = "";
-  statusDiv.textContent = "";
-
-  if (!walletInput) {
-    statusDiv.textContent = "Please enter a valid Solana wallet address.";
+  if (!address) {
+    resultDiv.innerHTML = "<p style='color:red;'>❌ Wallet address is required.</p>";
     return;
   }
 
-  statusDiv.textContent = "Fetching wallet assets, please wait...";
-
   try {
-    const assets = await getWalletAssets(walletInput);
+    const balancesUrl = `https://api.helius.xyz/v0/addresses/${address}/balances?api-key=${API_KEY}`;
+    const response = await fetch(balancesUrl);
+    const data = await response.json();
 
-    if (!assets || assets.length === 0) {
-      statusDiv.textContent = "No assets found or invalid wallet address.";
+    if (!data.tokens || data.tokens.length === 0) {
+      resultDiv.innerHTML = "<p>No token balances found.</p>";
       return;
     }
 
-    let totalValue = 0;
-    let rows = "";
+    let totalValueUSD = 0;
+    const labels = [];
+    const values = [];
+    const list = [];
 
-    for (const token of assets) {
-      const mint = token.mint;
-      const decimals = token.decimals;
-      const amountRaw = Number(token.amount || 0);
-      const amount = amountRaw / (10 ** decimals);
-
-      const coingeckoId = mintToCoingecko[mint];
-
-      let price = 0;
-      if (coingeckoId) {
-        price = await getTokenPriceCoingecko(coingeckoId);
+    data.tokens.forEach(token => {
+      if (token.amount > 0 && token.price_info?.usd) {
+        const usdValue = token.amount * token.price_info.usd;
+        totalValueUSD += usdValue;
+        labels.push(token.token_account.label || token.token_account.mint.slice(0, 6));
+        values.push(usdValue);
+        list.push(`<li>${token.token_account.label || "Unknown Token"}: $${usdValue.toFixed(2)}</li>`);
       }
+    });
 
-      const usdValue = amount * price;
-      totalValue += usdValue;
-
-      rows += `
-        <tr>
-          <td>${token.symbol || "UNKNOWN"}</td>
-          <td>${amount.toFixed(6)}</td>
-          <td>$${price.toFixed(4)}</td>
-          <td>$${usdValue.toFixed(2)}</td>
-        </tr>
-      `;
-    }
-
-    statusDiv.textContent = `Total Wallet Value: $${totalValue.toFixed(2)}`;
-
-    resultsDiv.innerHTML = `
-      <table>
-        <thead>
-          <tr>
-            <th>Token</th>
-            <th>Amount</th>
-            <th>Price (USD)</th>
-            <th>Value (USD)</th>
-          </tr>
-        </thead>
-        <tbody>${rows}</tbody>
-      </table>
+    resultDiv.innerHTML = `
+      <h3>Total Asset Value: $${totalValueUSD.toFixed(2)}</h3>
+      <ul style="text-align:left; list-style: none;">${list.join("")}</ul>
+      <canvas id="pieChart" width="400" height="400"></canvas>
+      <canvas id="solChart" width="600" height="300"></canvas>
     `;
 
+    drawPieChart(labels, values);
+    fetchSOLChart();
+
+  } catch (error) {
+    resultDiv.innerHTML = `<p style='color:red;'>Error fetching wallet data: ${error.message}</p>`;
+  }
+}
+
+function drawPieChart(labels, data) {
+  const ctx = document.getElementById("pieChart").getContext("2d");
+  new Chart(ctx, {
+    type: "pie",
+    data: {
+      labels: labels,
+      datasets: [{
+        label: "Token Distribution",
+        data: data,
+        borderWidth: 1
+      }]
+    }
+  });
+}
+
+async function fetchSOLChart() {
+  try {
+    const response = await fetch("https://api.coingecko.com/api/v3/coins/solana/market_chart?vs_currency=usd&days=1");
+    const chartData = await response.json();
+    const prices = chartData.prices;
+
+    const labels = prices.map(p => new Date(p[0]).toLocaleTimeString());
+    const values = prices.map(p => p[1]);
+
+    const ctx = document.getElementById("solChart").getContext("2d");
+    new Chart(ctx, {
+      type: "line",
+      data: {
+        labels: labels,
+        datasets: [{
+          label: "SOL Live Price (USD)",
+          data: values,
+          fill: false,
+          borderColor: "#13ff85",
+          tension: 0.1
+        }]
+      }
+    });
   } catch (err) {
-    statusDiv.textContent = "Error fetching wallet data: " + err.message;
+    console.error("SOL Chart Error:", err.message);
   }
 }
