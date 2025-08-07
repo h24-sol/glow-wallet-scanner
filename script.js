@@ -1,141 +1,139 @@
-const API_KEY = "c96a3c81-a711-4d05-8d98-19de7f38722b";
-const API_URL = "https://api.helius.xyz/v0/addresses";
+const scanBtn = document.getElementById("scanBtn");
 const walletInput = document.getElementById("wallet");
-const resultDiv = document.getElementById("result");
-const scanButton = document.getElementById("scanBtn");
+const resultSection = document.getElementById("result");
 const exportBtn = document.getElementById("exportBtn");
-const chartCanvas = document.getElementById("chart");
-const searchInput = document.getElementById("searchInput");
 const darkToggle = document.getElementById("darkToggle");
+const searchInput = document.getElementById("searchInput");
 
-let fullTokenList = [];
+const HELIUS_API_KEY = "c96a3c81-a711-4d05-8d98-19de7f38722b"; // your API
+const COIN_API = "https://price.jup.ag/v4/price?ids=";
 
-scanButton.addEventListener("click", async () => {
+let allTokens = [];
+
+scanBtn.addEventListener("click", scanWallet);
+exportBtn.addEventListener("click", exportCSV);
+darkToggle.addEventListener("click", () => {
+  document.body.classList.toggle("dark");
+});
+searchInput.addEventListener("input", () => displayTokens(allTokens));
+
+async function scanWallet() {
   const address = walletInput.value.trim();
-  if (!address) return alert("Please enter a wallet address.");
+  if (!address) return alert("Please enter a wallet address");
 
-  resultDiv.innerHTML = "🔄 Scanning wallet...";
-  fullTokenList = [];
+  resultSection.innerHTML = "🔄 Scanning...";
 
   try {
-    const res = await fetch(`${API_URL}/${address}/balances?api-key=${API_KEY}`);
-    const data = await res.json();
+    const response = await fetch(`https://api.helius.xyz/v0/addresses/${address}/balances?api-key=${HELIUS_API_KEY}`);
+    const data = await response.json();
 
-    if (!data) throw new Error("Invalid response");
+    const tokens = data.tokens || [];
+    const native = data.nativeBalance / 1e9;
 
-    const tokens = data.tokens.filter(t => t.amount > 0);
-    const sol = (data.nativeBalance || 0) / 1e9;
+    let html = `<p>💰 Native SOL Balance: ${native.toFixed(4)} SOL</p><ul>`;
+    let totalUSD = 0;
 
-    const enriched = await enrichTokens(tokens);
-    fullTokenList = enriched;
+    // Get prices for tokens
+    const mints = tokens.map(t => t.mint).join(",");
+    const priceRes = await fetch(`${COIN_API}${mints}`);
+    const prices = await priceRes.json();
 
-    const totalUsd = enriched.reduce((sum, t) => sum + t.usdValue, sol * getSolPrice());
+    allTokens = tokens.map(t => {
+      const amount = t.amount / Math.pow(10, t.decimals || 0);
+      const usd = prices.data?.[t.mint]?.price || 0;
+      const isScam = amount > 10000 && usd < 0.00001;
+      const isAirdrop = amount > 5000 && usd === 0;
 
-    resultDiv.innerHTML = `
-      💰 Native SOL Balance: ${sol.toFixed(4)} SOL ($${(sol * getSolPrice()).toFixed(2)})
-      <br><br>
-      🔹 Tokens:<br>
-      ${renderTokens(enriched)}
-      <br>💎 Estimated Total Wallet Worth: ~$${totalUsd.toFixed(2)} USD
-      <br><br>🧠 AI Summary: ${generateSummary(enriched, sol)}
-    `;
+      return {
+        ...t,
+        amount,
+        usd,
+        isScam,
+        isAirdrop
+      };
+    });
 
-    renderChart(enriched, sol);
+    const filtered = allTokens.filter(matchSearch);
+    filtered.forEach(t => {
+      const line = `
+        <li>
+          ${t.isScam ? "⚠️ SCAM" : ""} ${t.isAirdrop ? "🎁 Airdrop" : ""}
+          <br>- Token Mint: ${t.mint}
+          <br>  Amount: ${t.amount.toFixed(4)}
+          <br>  USD: ~$${(t.amount * t.usd).toFixed(4)}
+        </li><br>
+      `;
+      html += line;
+      totalUSD += t.amount * t.usd;
+    });
+
+    html += `</ul><p>💎 Estimated Total Wallet Worth: ~$${totalUSD.toFixed(2)} USD</p>`;
+    html += getSummary(native, totalUSD, allTokens.length);
+    resultSection.innerHTML = html;
+
+    drawChart(allTokens);
   } catch (e) {
+    resultSection.innerHTML = "❌ Error scanning wallet";
     console.error(e);
-    resultDiv.innerHTML = "❌ Failed to fetch wallet data.";
   }
-});
-
-function getSolPrice() {
-  return 160; // Static for now. You can fetch live price from CoinGecko API
 }
 
-function renderTokens(tokens) {
-  return tokens.map(t => `
-    - <strong>${t.symbol || "Unknown"}</strong> (${t.mint.slice(0, 4)}...${t.mint.slice(-4)})<br>
-      Amount: ${(t.amount / Math.pow(10, t.decimals)).toFixed(4)} ~ $${t.usdValue.toFixed(2)} ${t.scam ? "🚨 SCAM?" : ""}
-  `).join("<br><br>");
-}
+function drawChart(tokens) {
+  const ctx = document.getElementById("chart").getContext("2d");
+  const labels = tokens.map(t => t.mint.slice(0, 4) + "..." + t.mint.slice(-4));
+  const data = tokens.map(t => (t.amount * t.usd));
 
-async function enrichTokens(tokens) {
-  return tokens.map(t => {
-    const amount = t.amount / Math.pow(10, t.decimals);
-    const usd = estimatePrice(t.mint) * amount;
-    const scam = detectScam(t);
-    const symbol = getSymbol(t.mint);
-    return { ...t, usdValue: usd, scam, symbol };
-  });
-}
-
-function estimatePrice(mint) {
-  const known = {
-    "So11111111111111111111111111111111111111112": 160 // wrapped SOL
-    // Add more mints if needed
-  };
-  return known[mint] || 0.000001; // default guess
-}
-
-function detectScam(t) {
-  return (
-    t.amount > 1_000_000_000 &&
-    t.decimals === 0
-  );
-}
-
-function generateSummary(tokens, sol) {
-  const tokenCount = tokens.length;
-  const scams = tokens.filter(t => t.scam).length;
-  const highValue = tokens.filter(t => t.usdValue > 10).length;
-
-  if (sol === 0 && tokenCount === 0) return "Empty wallet.";
-  if (scams > 0) return "Caution: Possible airdrop scams found.";
-  if (highValue > 3) return "This wallet holds multiple high-value tokens.";
-  return "Normal wallet with low to medium activity.";
-}
-
-function renderChart(tokens, sol) {
-  const labels = tokens.map(t => t.symbol || "Unknown");
-  const data = tokens.map(t => t.usdValue);
-
-  if (sol > 0) {
-    labels.push("SOL");
-    data.push(sol * getSolPrice());
-  }
-
-  new Chart(chartCanvas, {
+  if (window.pieChart) window.pieChart.destroy();
+  window.pieChart = new Chart(ctx, {
     type: "pie",
     data: {
       labels,
       datasets: [{
-        data
+        data,
+        borderWidth: 1
       }]
     }
   });
 }
 
-exportBtn.addEventListener("click", () => {
-  const csv = fullTokenList.map(t =>
-    `${t.symbol || "Unknown"},${t.amount},${t.usdValue.toFixed(2)},${t.mint},${t.scam ? "Yes" : "No"}`
-  ).join("\n");
-  const blob = new Blob([csv], { type: "text/csv" });
+function exportCSV() {
+  if (!allTokens.length) return;
+
+  const csv = [
+    ["Mint", "Amount", "USD Value"]
+  ];
+
+  allTokens.forEach(t => {
+    csv.push([t.mint, t.amount.toFixed(4), (t.amount * t.usd).toFixed(4)]);
+  });
+
+  const blob = new Blob([csv.map(r => r.join(",")).join("\n")], { type: "text/csv" });
   const url = URL.createObjectURL(blob);
 
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = "wallet_export.csv";
-  link.click();
-});
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "wallet_data.csv";
+  a.click();
+}
 
-searchInput.addEventListener("input", () => {
-  const keyword = searchInput.value.toLowerCase();
-  const filtered = fullTokenList.filter(t =>
-    (t.symbol || "").toLowerCase().includes(keyword)
-  );
-  resultDiv.innerHTML = renderTokens(filtered);
-});
+function getSummary(sol, usd, tokenCount) {
+  return `
+    <p>🧠 AI Wallet Summary:</p>
+    <ul>
+      <li>📦 Token count: ${tokenCount}</li>
+      <li>💸 USD Total: ~$${usd.toFixed(2)}</li>
+      <li>🔐 SOL Balance: ${sol.toFixed(4)} SOL</li>
+      <li>⚠️ Scam tokens: ${allTokens.filter(t => t.isScam).length}</li>
+      <li>🎁 Airdrops: ${allTokens.filter(t => t.isAirdrop).length}</li>
+    </ul>
+  `;
+}
 
-darkToggle.addEventListener("click", () => {
-  document.body.classList.toggle("dark");
-});
+function matchSearch(token) {
+  const q = searchInput.value.toLowerCase();
+  return token.mint.toLowerCase().includes(q);
+}
 
+function displayTokens(tokens) {
+  scanWallet();
+}
