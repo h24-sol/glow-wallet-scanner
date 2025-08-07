@@ -1,28 +1,47 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>🧠 GLOW Wallet Scanner</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
   <div class="container">
     <h1>🧠 SOLANA META SCANNER</h1>
     <p>Scan with style. Powered by $GLOW</p>
 
-    <input type="text" id="walletInput" placeholder="Enter Solana wallet address" />
-    <div class="buttons">
-      <button id="scanBtn">🔍 Scan Wallet</button>
-      <button id="exportBtn">📁 Export CSV</button>
-      <button id="toggleDark">🌗 Toggle Dark Mode</button>
+    <input type="text" id="walletInput" placeholder="Enter Solana Wallet Address" />
+    <div class="button-row">
+      <button onclick="scanWallet()">🔍 Scan Wallet</button>
+      <button onclick="exportCSV()">📁 Export CSV</button>
+      <button onclick="toggleDarkMode()">🌗 Toggle Dark Mode</button>
     </div>
 
-    <input type="text" id="searchInput" placeholder="🔎 Search Token" />
+    <input type="text" id="searchInput" onkeyup="filterTokens()" placeholder="🔎 Search Token" />
 
-    <div id="result"></div>
+    <div id="solChartContainer">
+      <canvas id="solChart"></canvas>
+    </div>
+
+    <div id="results">
+      <p id="nativeBalance"></p>
+      <ul id="tokenList"></ul>
+      <p id="totalWorth"></p>
+    </div>
+
+    <div>
+      <h2>📊 Portfolio Breakdown</h2>
+      <canvas id="portfolioChart"></canvas>
+    </div>
+
+    <div>
+      <h2>🧠 AI Wallet Summary</h2>
+      <p id="aiSummary">Summary will appear here after scanning.</p>
+    </div>
   </div>
 
-  <!-- Make sure script is at the end -->
   <script src="script.js"></script>
 </body>
 </html>
