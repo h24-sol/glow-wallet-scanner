@@ -1,139 +1,129 @@
-const heliusURL = 'https://mainnet.helius-rpc.com/?api-key=4e9c3cf0-79d3-4072-8fc5-6e8aa8d3a6e4';
-let chartInstance = null;
-let portfolioChart = null;
+const API_KEY = "REPLACE_WITH_YOUR_HELIUS_API_KEY";
+const SOL_PRICE_API = "https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd";
+
+let solPrice = 0;
+let tokensGlobal = [];
+
+async function fetchSolPrice() {
+  const res = await fetch(SOL_PRICE_API);
+  const data = await res.json();
+  solPrice = data.solana.usd;
+  return solPrice;
+}
 
 async function scanWallet() {
-  const address = document.getElementById('walletInput').value;
-  if (!address) return alert("Please enter a wallet address.");
+  const address = document.getElementById("walletInput").value.trim();
+  if (!address) return alert("Enter wallet address");
+
+  document.getElementById("walletAddress").innerText = address;
 
   try {
-    const res = await fetch(heliusURL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        jsonrpc: "2.0",
-        id: 1,
-        method: "getTokenAccounts",
-        params: { owner: address, displayOptions: { showUnverifiedCollections: true } }
-      })
-    });
+    await fetchSolPrice();
 
+    const url = `https://api.helius.xyz/v0/addresses/${address}/balances?api-key=${API_KEY}`;
+    const res = await fetch(url);
     const data = await res.json();
-    const tokens = data.result?.tokens || [];
-    const sol = data.result?.nativeBalance?.lamports || 0;
-    const solBalance = sol / 1e9;
 
-    document.getElementById('nativeBalance').textContent = `💰 Native SOL Balance: ${solBalance.toFixed(4)} SOL`;
+    const sol = (data.nativeBalance || 0) / 1e9;
+    const solUSD = (sol * solPrice).toFixed(2);
+    document.getElementById("solBalance").innerText = `💰 Native SOL Balance: ${sol.toFixed(4)} SOL ($${solUSD})`;
 
-    const solPrice = await fetchSOLPrice();
-    const solUSD = solBalance * solPrice;
-    let total = solUSD;
+    tokensGlobal = (data.tokens || []).map(t => ({
+      mint: t.mint,
+      amount: t.amount / 10 ** t.decimals,
+    }));
 
-    const tokenList = document.getElementById('tokenList');
-    tokenList.innerHTML = '';
-    const pieLabels = [];
-    const pieData = [];
+    showTokens(tokensGlobal);
+    showPortfolio(tokensGlobal);
+    generateSummary(tokensGlobal, sol, solUSD);
+    drawSOLChart();
 
-    tokens.forEach(token => {
-      const mint = token.mint;
-      const amount = token.amount / Math.pow(10, token.decimals || 0);
-      const li = document.createElement('li');
-      li.textContent = `Mint: ${mint}\nAmount: ${amount.toFixed(4)}`;
-      li.classList.add('token-item');
-      tokenList.appendChild(li);
+    const totalValue = parseFloat(solUSD); // Token value skipped, no oracle data
+    document.getElementById("totalValue").innerText = `💎 Estimated Total Wallet Worth: ~$${totalValue.toFixed(2)} USD`;
 
-      pieLabels.push(mint.slice(0, 4) + "..." + mint.slice(-4));
-      pieData.push(amount);
-    });
-
-    document.getElementById('totalValue').textContent = `💎 Estimated Total Wallet Worth: ~$${total.toFixed(2)} USD`;
-    document.getElementById('walletSummary').textContent =
-      `This wallet holds approximately ${solBalance.toFixed(2)} SOL and ${tokens.length} tokens, with a total estimated value of $${total.toFixed(2)}.`;
-
-    renderPieChart(pieLabels, pieData);
   } catch (err) {
-    document.getElementById('nativeBalance').textContent = "💰 Native SOL Balance: N/A";
-    document.getElementById('totalValue').textContent = "💎 Estimated Total Wallet Worth: ~N/A USD";
-    document.getElementById('walletSummary').textContent = "❌ Failed to fetch wallet data.";
+    console.error(err);
+    document.getElementById("tokenList").innerHTML = `<p>❌ Failed to fetch wallet data.</p>`;
   }
 }
 
-async function fetchSOLPrice() {
-  const response = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd');
-  const data = await response.json();
-  return data.solana.usd;
-}
-
-function exportCSV() {
-  const rows = [["Token Mint", "Amount"]];
-  document.querySelectorAll('#tokenList li').forEach(li => {
-    const [mint, amount] = li.textContent.replace("Mint: ", "").split("\nAmount: ");
-    rows.push([mint, amount]);
+function showTokens(tokens) {
+  const container = document.getElementById("tokenList");
+  container.innerHTML = "🔹 Tokens:<br>";
+  tokens.forEach(t => {
+    container.innerHTML += `<div class="token">
+      <strong>Mint:</strong> ${t.mint}<br/>
+      <strong>Amount:</strong> ${t.amount.toFixed(4)}
+    </div>`;
   });
-
-  let csvContent = "data:text/csv;charset=utf-8," + rows.map(r => r.join(",")).join("\n");
-  const encodedUri = encodeURI(csvContent);
-  const link = document.createElement("a");
-  link.setAttribute("href", encodedUri);
-  link.setAttribute("download", "wallet_tokens.csv");
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-}
-
-function toggleDarkMode() {
-  document.body.classList.toggle("dark-mode");
 }
 
 function filterTokens() {
-  const input = document.getElementById("searchInput").value.toLowerCase();
-  const items = document.querySelectorAll("#tokenList li");
-  items.forEach(item => {
-    item.style.display = item.textContent.toLowerCase().includes(input) ? "" : "none";
+  const keyword = document.getElementById("searchInput").value.toLowerCase();
+  const filtered = tokensGlobal.filter(t => t.mint.toLowerCase().includes(keyword));
+  showTokens(filtered);
+}
+
+function toggleDarkMode() {
+  document.body.classList.toggle("dark");
+}
+
+function exportCSV() {
+  let csv = "Mint,Amount\n";
+  tokensGlobal.forEach(t => {
+    csv += `${t.mint},${t.amount}\n`;
+  });
+
+  const blob = new Blob([csv], { type: "text/csv" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "wallet_tokens.csv";
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function showPortfolio(tokens) {
+  const ctx = document.getElementById("portfolioChart").getContext("2d");
+  const labels = tokens.map(t => t.mint.slice(0, 4) + "..." + t.mint.slice(-4));
+  const data = tokens.map(t => t.amount);
+
+  new Chart(ctx, {
+    type: "pie",
+    data: {
+      labels,
+      datasets: [{
+        data,
+        backgroundColor: labels.map(() => `hsl(${Math.random() * 360}, 70%, 60%)`)
+      }]
+    }
   });
 }
 
-async function renderSOLPriceChart() {
-  const response = await fetch('https://api.coingecko.com/api/v3/coins/solana/market_chart?vs_currency=usd&days=7');
-  const chartData = await response.json();
-  const prices = chartData.prices.map(p => p[1]);
-  const labels = chartData.prices.map(p => {
-    const date = new Date(p[0]);
-    return `${date.getMonth() + 1}/${date.getDate()}`;
-  });
+async function drawSOLChart() {
+  const res = await fetch("https://api.coingecko.com/api/v3/coins/solana/market_chart?vs_currency=usd&days=1");
+  const data = await res.json();
+  const prices = data.prices.map(p => p[1]);
+  const labels = data.prices.map(p => new Date(p[0]).toLocaleTimeString());
 
-  const ctx = document.getElementById('priceChart').getContext('2d');
-  if (chartInstance) chartInstance.destroy();
-  chartInstance = new Chart(ctx, {
-    type: 'line',
+  const ctx = document.getElementById("solPriceChart").getContext("2d");
+  new Chart(ctx, {
+    type: "line",
     data: {
-      labels: labels,
+      labels,
       datasets: [{
-        label: 'SOL Price (USD)',
+        label: "SOL Price (USD)",
         data: prices,
-        fill: true,
         borderWidth: 2
       }]
-    },
-    options: {
-      responsive: true
     }
   });
 }
 
-function renderPieChart(labels, data) {
-  const ctx = document.getElementById('portfolioChart').getContext('2d');
-  if (portfolioChart) portfolioChart.destroy();
-  portfolioChart = new Chart(ctx, {
-    type: 'pie',
-    data: {
-      labels: labels,
-      datasets: [{
-        data: data
-      }]
-    }
-  });
+function generateSummary(tokens, sol, usd) {
+  const count = tokens.length;
+  const summary = `This wallet holds approximately ${sol.toFixed(2)} SOL and ${count} tokens, with a total estimated value of $${usd}. ${
+    count === 0 ? "It appears to be a light user on the Solana network." : "It is an active wallet."
+  }`;
+  document.getElementById("walletSummary").innerText = summary;
 }
-
-// Load chart on first visit
-window.onload = renderSOLPriceChart;
