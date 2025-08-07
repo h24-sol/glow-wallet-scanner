@@ -1,52 +1,49 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>$GLOW – Solana Wallet Scanner</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>SOLANA META SCANNER</title>
   <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
-
 <body>
   <header>
-    <h1>🧠 SOLANA META SCANNER</h1>
-    <p>Scan with style. Powered by <strong>$GLOW</strong></p>
+    <h1>🟩 SOLANA META SCANNER</h1>
+    <p>Scan with style. Powered by $GLOW</p>
   </header>
 
   <main>
-    <section class="scanner">
-      <input type="text" id="walletInput" placeholder="Paste your wallet address here..." />
-      <button onclick="scanWallet()">🔍 Scan Wallet</button>
+    <section class="controls">
+      <input type="text" id="walletInput" placeholder="Enter Wallet Address" />
+      <button id="scanBtn">🔍 Scan Wallet</button>
+      <button id="csvExport">📁 Export CSV</button>
+      <button id="darkModeToggle">🌗 Toggle Dark Mode</button>
+      <input type="text" id="searchInput" placeholder="🔎 Search Token" />
     </section>
 
-    <section class="results" id="results">
-      <!-- Wallet Data Will Be Displayed Here -->
+    <section id="errorMessage" class="error-message"></section>
+
+    <section class="summary">
+      <h2>🧠 AI Wallet Summary</h2>
+      <p id="aiSummary">No summary yet.</p>
+    </section>
+
+    <section class="token-section">
+      <h2>🔹 Tokens:</h2>
+      <ul id="tokenList"></ul>
+    </section>
+
+    <section class="charts">
+      <h2>📊 Portfolio Breakdown</h2>
+      <canvas id="portfolioChart" width="300" height="300"></canvas>
     </section>
   </main>
 
-  <section class="about">
-    <h2>🧠 AI Wallet Summary</h2>
-    <ul>
-      <li>💼 Complete wallet portfolio scanner</li>
-      <li>📊 Visual portfolio breakdown with percentage</li>
-      <li>📈 Live SOL price chart</li>
-      <li>💵 Real USD token values</li>
-      <li>🔎 Token search & filter</li>
-      <li>🌗 Dark mode toggle</li>
-      <li>📁 CSV export support</li>
-      <li>📱 Fully responsive & mobile-first</li>
-      <li>🎨 Smooth animations & transitions</li>
-      <li>🧑‍💻 Open-source & GitHub hosted</li>
-      <li>🚀 Powered by Helius API</li>
-    </ul>
-  </section>
-
   <footer>
-    <p>Developed by MANISH • Contact: manis.programmer@gmail.com</p>
+    <p>Built for SOLANA. Not affiliated with Solana Foundation.</p>
   </footer>
 
   <script src="script.js"></script>
 </body>
-
 </html>
