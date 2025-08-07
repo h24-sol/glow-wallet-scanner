@@ -1,49 +1,142 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>SOLANA META SCANNER</title>
-  <link rel="stylesheet" href="style.css" />
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Solana Wallet Scanner ($GLOW)</title>
+<style>
+  body { font-family: Arial, sans-serif; margin: 20px; background: #f0f4f8; color: #333; }
+  h1 { color: #008080; }
+  input, button { padding: 10px; font-size: 16px; margin: 5px 0; }
+  #results { margin-top: 20px; }
+  table { border-collapse: collapse; width: 100%; max-width: 700px; }
+  th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+  th { background: #008080; color: white; }
+</style>
 </head>
 <body>
-  <header>
-    <h1>🟩 SOLANA META SCANNER</h1>
-    <p>Scan with style. Powered by $GLOW</p>
-  </header>
 
-  <main>
-    <section class="controls">
-      <input type="text" id="walletInput" placeholder="Enter Wallet Address" />
-      <button id="scanBtn">🔍 Scan Wallet</button>
-      <button id="csvExport">📁 Export CSV</button>
-      <button id="darkModeToggle">🌗 Toggle Dark Mode</button>
-      <input type="text" id="searchInput" placeholder="🔎 Search Token" />
-    </section>
+<h1>Solana Wallet Scanner ($GLOW)</h1>
+<p>Enter Solana Wallet Address to scan:</p>
+<input type="text" id="walletInput" placeholder="Paste Solana wallet address here" size="50" />
+<button onclick="scanWallet()">Scan Wallet</button>
 
-    <section id="errorMessage" class="error-message"></section>
+<div id="status"></div>
+<div id="results"></div>
 
-    <section class="summary">
-      <h2>🧠 AI Wallet Summary</h2>
-      <p id="aiSummary">No summary yet.</p>
-    </section>
+<script>
+  const HELIUS_API_KEY = "a711-4d05-8d98-19de7f38722b";
 
-    <section class="token-section">
-      <h2>🔹 Tokens:</h2>
-      <ul id="tokenList"></ul>
-    </section>
+  // Minimal token mint to Coingecko ID map (expand as needed)
+  const mintToCoingecko = {
+    "So11111111111111111111111111111111111111112": "solana",
+    "Es9vMFrzaCERWLzWfpHoUFR6Jxgxewqksx5FiNfAuVQ": "usd-coin",
+    "9n4nbM75f5Ui33ZbPYXn59EwSgE8CGsHtAeTH5YFeJ9E": "bitcoin",
+  };
 
-    <section class="charts">
-      <h2>📊 Portfolio Breakdown</h2>
-      <canvas id="portfolioChart" width="300" height="300"></canvas>
-    </section>
-  </main>
+  async function getWalletAssets(walletAddress) {
+    const url = `https://mainnet.helius-rpc.com/?api-key=${HELIUS_API_KEY}`;
+    const body = {
+      jsonrpc: "2.0",
+      id: "searchAssets",
+      method: "searchAssets",
+      params: {
+        ownerAddress: walletAddress,
+        tokenType: "fungible",
+        displayOptions: { showNativeBalance: true }
+      }
+    };
 
-  <footer>
-    <p>Built for SOLANA. Not affiliated with Solana Foundation.</p>
-  </footer>
+    const response = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body)
+    });
 
-  <script src="script.js"></script>
+    const data = await response.json();
+    if(data.error) throw new Error(data.error.message);
+    return data.result;
+  }
+
+  async function getTokenPriceCoingecko(tokenId) {
+    const url = `https://api.coingecko.com/api/v3/simple/price?ids=${tokenId}&vs_currencies=usd`;
+    const res = await fetch(url);
+    const data = await res.json();
+    return data[tokenId]?.usd || 0;
+  }
+
+  async function scanWallet() {
+    const walletInput = document.getElementById("walletInput").value.trim();
+    const statusDiv = document.getElementById("status");
+    const resultsDiv = document.getElementById("results");
+    resultsDiv.innerHTML = "";
+    statusDiv.textContent = "";
+
+    if (!walletInput) {
+      statusDiv.textContent = "Please enter a valid Solana wallet address.";
+      return;
+    }
+
+    statusDiv.textContent = "Fetching wallet assets, please wait...";
+
+    try {
+      const assets = await getWalletAssets(walletInput);
+
+      if (!assets || assets.length === 0) {
+        statusDiv.textContent = "No assets found or invalid wallet address.";
+        return;
+      }
+
+      let totalValue = 0;
+      let rows = "";
+
+      for (const token of assets) {
+        const mint = token.mint;
+        const decimals = token.decimals;
+        const amountRaw = Number(token.amount || 0);
+        const amount = amountRaw / (10 ** decimals);
+
+        const coingeckoId = mintToCoingecko[mint];
+
+        let price = 0;
+        if (coingeckoId) {
+          price = await getTokenPriceCoingecko(coingeckoId);
+        }
+
+        const usdValue = amount * price;
+        totalValue += usdValue;
+
+        rows += `
+          <tr>
+            <td>${token.symbol || "UNKNOWN"}</td>
+            <td>${amount.toFixed(6)}</td>
+            <td>$${price.toFixed(4)}</td>
+            <td>$${usdValue.toFixed(2)}</td>
+          </tr>
+        `;
+      }
+
+      statusDiv.textContent = `Total Wallet Value: $${totalValue.toFixed(2)}`;
+
+      resultsDiv.innerHTML = `
+        <table>
+          <thead>
+            <tr>
+              <th>Token</th>
+              <th>Amount</th>
+              <th>Price (USD)</th>
+              <th>Value (USD)</th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      `;
+
+    } catch (err) {
+      statusDiv.textContent = "Error fetching wallet data: " + err.message;
+    }
+  }
+</script>
+
 </body>
 </html>
