@@ -1,94 +1,102 @@
-const API_KEY = "2fb8074-3461-480a-a202-159d980fd02a";
+const apiKey = "a301848c-a27a-4b00-a2b1-7e0afab088a2"; // Replace with your actual Helius API key
 
 async function fetchWalletData() {
-  const address = document.getElementById("walletInput").value.trim();
-  const resultDiv = document.getElementById("result");
-  resultDiv.innerHTML = "";
-
-  if (!address) {
-    resultDiv.innerHTML = "<p style='color:red;'>❌ Wallet address is required.</p>";
-    return;
-  }
+  const address = document.getElementById("walletInput").value;
+  if (!address) return displayError("Please enter a wallet address");
 
   try {
-    const balancesUrl = `https://api.helius.xyz/v0/addresses/${address}/balances?api-key=${API_KEY}`;
-    const response = await fetch(balancesUrl);
-    const data = await response.json();
+    const [balances, transactions] = await Promise.all([
+      fetch(`https://api.helius.xyz/v0/addresses/${address}/balances?api-key=${apiKey}`).then(res => res.json()),
+      fetch(`https://api.helius.xyz/v0/addresses/${address}/transactions?api-key=${apiKey}&limit=10`).then(res => res.json()),
+    ]);
 
-    if (!data.tokens || data.tokens.length === 0) {
-      resultDiv.innerHTML = "<p>No token balances found.</p>";
-      return;
-    }
+    const walletAge = await fetchWalletAge(address);
+    const totalVolume = calculateVolume(transactions);
+    const burned = findBurnedTokens(transactions);
 
-    let totalValueUSD = 0;
-    const labels = [];
-    const values = [];
-    const list = [];
-
-    data.tokens.forEach(token => {
-      if (token.amount > 0 && token.price_info?.usd) {
-        const usdValue = token.amount * token.price_info.usd;
-        totalValueUSD += usdValue;
-        labels.push(token.token_account.label || token.token_account.mint.slice(0, 6));
-        values.push(usdValue);
-        list.push(`<li>${token.token_account.label || "Unknown Token"}: $${usdValue.toFixed(2)}</li>`);
-      }
-    });
-
-    resultDiv.innerHTML = `
-      <h3>Total Asset Value: $${totalValueUSD.toFixed(2)}</h3>
-      <ul style="text-align:left; list-style: none;">${list.join("")}</ul>
-      <canvas id="pieChart" width="400" height="400"></canvas>
-      <canvas id="solChart" width="600" height="300"></canvas>
-    `;
-
-    drawPieChart(labels, values);
-    fetchSOLChart();
-
-  } catch (error) {
-    resultDiv.innerHTML = `<p style='color:red;'>Error fetching wallet data: ${error.message}</p>`;
+    renderWalletData(balances, walletAge, transactions, totalVolume, burned);
+  } catch (err) {
+    displayError("Failed to fetch wallet data");
   }
 }
 
-function drawPieChart(labels, data) {
-  const ctx = document.getElementById("pieChart").getContext("2d");
-  new Chart(ctx, {
-    type: "pie",
-    data: {
-      labels: labels,
-      datasets: [{
-        label: "Token Distribution",
-        data: data,
-        borderWidth: 1
-      }]
+async function fetchWalletAge(address) {
+  const url = `https://api.helius.xyz/v0/addresses/${address}/transactions?api-key=${apiKey}&limit=1&before=now`;
+  const res = await fetch(url);
+  const data = await res.json();
+  const firstTx = data?.[0];
+  return firstTx ? new Date(firstTx.timestamp * 1000).toDateString() : "Unknown";
+}
+
+function calculateVolume(txs) {
+  let totalIn = 0, totalOut = 0;
+  txs.forEach(tx => {
+    if (tx.type === "TRANSFER") {
+      tx.tokenTransfers?.forEach(t => {
+        if (t.toUserAccount?.includes(tx.account)) totalIn += +t.tokenAmount;
+        else totalOut += +t.tokenAmount;
+      });
     }
   });
+  return { totalIn, totalOut };
 }
 
-async function fetchSOLChart() {
-  try {
-    const response = await fetch("https://api.coingecko.com/api/v3/coins/solana/market_chart?vs_currency=usd&days=1");
-    const chartData = await response.json();
-    const prices = chartData.prices;
-
-    const labels = prices.map(p => new Date(p[0]).toLocaleTimeString());
-    const values = prices.map(p => p[1]);
-
-    const ctx = document.getElementById("solChart").getContext("2d");
-    new Chart(ctx, {
-      type: "line",
-      data: {
-        labels: labels,
-        datasets: [{
-          label: "SOL Live Price (USD)",
-          data: values,
-          fill: false,
-          borderColor: "#13ff85",
-          tension: 0.1
-        }]
+function findBurnedTokens(txs) {
+  const burned = {};
+  txs.forEach(tx => {
+    tx.tokenTransfers?.forEach(t => {
+      if (t.toUserAccount === "11111111111111111111111111111111") {
+        burned[t.tokenSymbol] = (burned[t.tokenSymbol] || 0) + +t.tokenAmount;
       }
     });
-  } catch (err) {
-    console.error("SOL Chart Error:", err.message);
+  });
+  return burned;
+}
+
+function renderWalletData(data, creationDate, txs, volume, burned) {
+  const container = document.getElementById("walletData");
+  container.innerHTML = "";
+
+  const totalUSD = data.tokens.reduce((sum, t) => sum + (t.amount / Math.pow(10, t.decimals)) * (t.price || 0), 0).toFixed(2);
+  container.innerHTML += `<p><strong>Total Asset Value (USD):</strong> $${totalUSD}</p>`;
+  container.innerHTML += `<p><strong>Wallet Created On:</strong> ${creationDate}</p>`;
+  container.innerHTML += `<p><strong>Total Transactions:</strong> ${txs.length}</p>`;
+  container.innerHTML += `<p><strong>Total Volume In:</strong> ${volume.totalIn.toFixed(2)}</p>`;
+  container.innerHTML += `<p><strong>Total Volume Out:</strong> ${volume.totalOut.toFixed(2)}</p>`;
+
+  container.innerHTML += `<h3>🔥 Burned Tokens:</h3>`;
+  if (Object.keys(burned).length > 0) {
+    for (const [symbol, amt] of Object.entries(burned)) {
+      container.innerHTML += `<p><strong>${symbol}:</strong> ${amt.toFixed(2)}</p>`;
+    }
+  } else {
+    container.innerHTML += `<p>No burned tokens detected.</p>`;
   }
+
+  container.innerHTML += `<h3>🎯 Token Holdings:</h3>`;
+  data.tokens.forEach(t => {
+    const value = (t.amount / Math.pow(10, t.decimals)).toFixed(4);
+    const price = t.price ? `$${(value * t.price).toFixed(2)}` : "Price N/A";
+    container.innerHTML += `
+      <div class="token">
+        <p><strong>${t.tokenAccount?.tokenName || "Unknown"} (${t.tokenAccount?.tokenSymbol || "?"})</strong></p>
+        <p>Amount: ${value}</p>
+        <p>USD Value: ${price}</p>
+      </div>
+    `;
+  });
+
+  container.innerHTML += `<h3>🧾 Recent Transactions:</h3>`;
+  if (txs.length === 0) {
+    container.innerHTML += "<p>No recent transactions found.</p>";
+  } else {
+    txs.forEach(tx => {
+      container.innerHTML += `<p>${new Date(tx.timestamp * 1000).toLocaleString()} - ${tx.type}</p>`;
+    });
+  }
+}
+
+function displayError(msg) {
+  const container = document.getElementById("walletData");
+  container.innerHTML = `<p style="color: red;">❌ ${msg}</p>`;
 }
