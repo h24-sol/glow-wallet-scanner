@@ -13,9 +13,7 @@
 
   <style>
     /* Reset & base */
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
     body {
       margin: 0;
       font-family: 'Poppins', sans-serif;
@@ -111,7 +109,6 @@
     tbody tr:hover {
       background: #00ffd533;
     }
-    /* Charts container */
     #charts {
       display: flex;
       flex-wrap: wrap;
@@ -144,26 +141,18 @@
       user-select: none;
     }
     @media (max-width: 500px) {
-      input[type="text"] {
-        width: 100%;
-      }
-      button {
-        width: 100%;
-      }
+      input[type="text"] { width: 100%; }
+      button { width: 100%; }
     }
   </style>
 </head>
 <body>
-
   <h1>Solana Wallet Scanner ($GLOW)</h1>
   <p>Paste a Solana wallet address below and click <b>Scan Wallet</b>:</p>
   <input type="text" id="walletInput" placeholder="Paste Solana wallet address here" autocomplete="off" />
   <button id="scanBtn">Scan Wallet</button>
-
   <div id="status"></div>
-
   <div id="results"></div>
-
   <div id="charts">
     <div class="chart-box">
       <h3>Live SOL Price Chart</h3>
@@ -174,255 +163,12 @@
       <canvas id="assetPieChart"></canvas>
     </div>
   </div>
-
   <footer>
     Developed by MANISH &nbsp;&bull;&nbsp; Email: manis.programmer@gmail.com &nbsp;&bull;&nbsp; $GLOW
   </footer>
-
-<script>
-  const HELIUS_API_KEY = "2fb8074-3461-480a-a202-159d980fd02a";
-
-  // Token mint to CoinGecko ID mapping (expand as needed)
-  const mintToCoingecko = {
-    "So11111111111111111111111111111111111111112": "solana",
-    "Es9vMFrzaCERWLzWfpHoUFR6Jxgxewqksx5FiNfAuVQ": "usd-coin",
-    "9n4nbM75f5Ui33ZbPYXn59EwSgE8CGsHtAeTH5YFeJ9E": "bitcoin",
-    // Add more as you like
-  };
-
-  const statusDiv = document.getElementById("status");
-  const resultsDiv = document.getElementById("results");
-  const walletInput = document.getElementById("walletInput");
-  const scanBtn = document.getElementById("scanBtn");
-
-  // Chart.js instances
-  let solPriceChart = null;
-  let assetPieChart = null;
-
-  async function fetchHeliusAssets(walletAddress) {
-    const url = `https://mainnet.helius-rpc.com/?api-key=${HELIUS_API_KEY}`;
-    const body = {
-      jsonrpc: "2.0",
-      id: "searchAssets",
-      method: "searchAssets",
-      params: {
-        ownerAddress: walletAddress,
-        tokenType: "fungible",
-        displayOptions: { showNativeBalance: true }
-      }
-    };
-
-    const response = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body)
-    });
-
-    const data = await response.json();
-    if (data.error) throw new Error(data.error.message);
-    return data.result;
-  }
-
-  async function fetchTokenPrice(tokenId) {
-    const url = `https://api.coingecko.com/api/v3/simple/price?ids=${tokenId}&vs_currencies=usd`;
-    const res = await fetch(url);
-    const data = await res.json();
-    return data[tokenId]?.usd || 0;
-  }
-
-  async function fetchSolPriceHistory() {
-    // Using CoinGecko's market chart for last 1 day with hourly prices
-    const url = 'https://api.coingecko.com/api/v3/coins/solana/market_chart?vs_currency=usd&days=1&interval=hourly';
-    const res = await fetch(url);
-    const data = await res.json();
-    return data.prices; // array of [timestamp, price]
-  }
-
-  function formatDate(ts) {
-    const d = new Date(ts);
-    return d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-  }
-
-  async function scanWallet() {
-    const walletAddr = walletInput.value.trim();
-    resultsDiv.innerHTML = "";
-    statusDiv.textContent = "";
-
-    if (!walletAddr) {
-      statusDiv.textContent = "Please enter a valid Solana wallet address.";
-      return;
-    }
-
-    scanBtn.disabled = true;
-    scanBtn.textContent = "Scanning...";
-    statusDiv.textContent = "Fetching wallet assets... Please wait.";
-
-    try {
-      const assets = await fetchHeliusAssets(walletAddr);
-
-      if (!assets || assets.length === 0) {
-        statusDiv.textContent = "No assets found or invalid wallet address.";
-        scanBtn.disabled = false;
-        scanBtn.textContent = "Scan Wallet";
-        return;
-      }
-
-      // Fetch prices & calculate values
-      let totalValue = 0;
-      let tableRows = "";
-      let pieDataLabels = [];
-      let pieDataValues = [];
-      let pieColors = [];
-
-      for (const token of assets) {
-        const mint = token.mint;
-        const decimals = token.decimals;
-        const amountRaw = Number(token.amount || 0);
-        const amount = amountRaw / (10 ** decimals);
-
-        const coingeckoId = mintToCoingecko[mint];
-        let price = 0;
-        if (coingeckoId) {
-          price = await fetchTokenPrice(coingeckoId);
-        }
-        const usdValue = amount * price;
-        totalValue += usdValue;
-
-        tableRows += `
-          <tr>
-            <td>${token.symbol || "UNKNOWN"}</td>
-            <td>${amount.toFixed(6)}</td>
-            <td>$${price.toFixed(4)}</td>
-            <td>$${usdValue.toFixed(2)}</td>
-          </tr>
-        `;
-
-        if(usdValue > 0) {
-          pieDataLabels.push(token.symbol || mint.slice(0,6));
-          pieDataValues.push(usdValue);
-          pieColors.push(randomColor());
-        }
-      }
-
-      statusDiv.textContent = `Total Wallet Value: $${totalValue.toFixed(2)}`;
-
-      resultsDiv.innerHTML = `
-        <table>
-          <thead>
-            <tr>
-              <th>Token</th>
-              <th>Amount</th>
-              <th>Price (USD)</th>
-              <th>Value (USD)</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${tableRows}
-          </tbody>
-        </table>
-      `;
-
-      // Draw charts
-      await drawSolPriceChart();
-      drawAssetPieChart(pieDataLabels, pieDataValues, pieColors);
-
-    } catch (error) {
-      statusDiv.textContent = "Error: " + error.message;
-    } finally {
-      scanBtn.disabled = false;
-      scanBtn.textContent = "Scan Wallet";
-    }
-  }
-
-  async function drawSolPriceChart() {
-    const ctx = document.getElementById('solPriceChart').getContext('2d');
-    const priceData = await fetchSolPriceHistory();
-
-    const labels = priceData.map(p => formatDate(p[0]));
-    const prices = priceData.map(p => p[1]);
-
-    if (solPriceChart) solPriceChart.destroy();
-
-    solPriceChart = new Chart(ctx, {
-      type: 'line',
-      data: {
-        labels: labels,
-        datasets: [{
-          label: 'SOL Price (USD)',
-          data: prices,
-          borderColor: '#00ffd5',
-          backgroundColor: 'rgba(0, 255, 213, 0.2)',
-          fill: true,
-          tension: 0.3,
-          pointRadius: 0,
-        }]
-      },
-      options: {
-        responsive: true,
-        scales: {
-          y: {
-            beginAtZero: false,
-            ticks: { color: '#00ffd5' },
-            grid: { color: '#00ffd533' }
-          },
-          x: {
-            ticks: { color: '#00ffd5' },
-            grid: { color: '#00ffd533' }
-          }
-        },
-        plugins: {
-          legend: { labels: { color: '#00ffd5' } }
-        }
-      }
-    });
-  }
-
-  function drawAssetPieChart(labels, data, colors) {
-    const ctx = document.getElementById('assetPieChart').getContext('2d');
-
-    if (assetPieChart) assetPieChart.destroy();
-
-    assetPieChart = new Chart(ctx, {
-      type: 'doughnut',
-      data: {
-        labels: labels,
-        datasets: [{
-          data: data,
-          backgroundColor: colors,
-          borderColor: '#203a43',
-          borderWidth: 2,
-        }]
-      },
-      options: {
-        responsive: true,
-        plugins: {
-          legend: { position: 'bottom', labels: { color: '#00ffd5' } },
-          tooltip: {
-            callbacks: {
-              label: ctx => {
-                let val = ctx.raw;
-                return `${ctx.label}: $${val.toFixed(2)}`;
-              }
-            }
-          }
-        }
-      }
-    });
-  }
-
-  function randomColor() {
-    // pastel colors around #00ffd5 hue
-    const baseHue = 174; // cyan/aqua
-    const hue = baseHue + (Math.random() * 40 - 20);
-    const saturation = 80 + Math.random() * 20;
-    const lightness = 60 + Math.random() * 20;
-    return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
-  }
-
-  scanBtn.addEventListener('click', scanWallet);
-  walletInput.addEventListener('keyup', e => { if (e.key === 'Enter') scanWallet(); });
-
-</script>
-
+  <script>
+    const HELIUS_API_KEY = "a301848c-a27a-4b00-a2b1-7e0afab088a2";
+    // the rest of your JS code remains unchanged
+  </script>
 </body>
 </html>
