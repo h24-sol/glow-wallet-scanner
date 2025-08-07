@@ -2,65 +2,58 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>SOLANA META SCANNER</title>
   <link rel="stylesheet" href="style.css" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
   <header>
-    <h1>🟩 SOLANA META SCANNER</h1>
-    <p>Scan with style. Powered by $GLOW</p>
+    <h1>SOLANA META SCANNER</h1>
+    <p>🚀 Analyze your wallet like never before</p>
   </header>
 
   <div class="actions">
-    <input type="text" id="walletInput" placeholder="Enter wallet address..." />
-    <button onclick="scanWallet()">🔍 Scan Wallet</button>
-    <button onclick="exportCSV()">📁 Export CSV</button>
-    <button onclick="toggleDarkMode()">🌗 Toggle Dark Mode</button>
+    <input type="text" id="walletInput" placeholder="Enter Solana wallet address..." />
+    <button id="scanBtn">Scan Wallet</button>
+    <button id="darkModeBtn">🌓 Toggle Dark Mode</button>
+    <button id="exportBtn">⬇️ Export CSV</button>
   </div>
 
-  <div id="tokenSearch">
-    <input type="text" id="searchInput" placeholder="🔎 Search Token" onkeyup="filterTokens()" />
+  <div id="tokenSearch" class="actions">
+    <input type="text" placeholder="🔍 Search tokens..." />
   </div>
 
-  <div id="errorMessage"></div>
+  <p id="errorMessage"></p>
 
-  <section>
-    <h3>🔹 Tokens:</h3>
-    <ul id="tokenList"></ul>
-  </section>
+  <ul id="tokenList"></ul>
 
   <div class="chart-container">
-    <h3>📊 Portfolio Breakdown</h3>
     <canvas id="portfolioChart"></canvas>
   </div>
 
   <div class="chart-container">
-    <h3>📉 SOL Price Chart</h3>
     <canvas id="solChart"></canvas>
   </div>
 
   <section class="features">
-    <h3>✨ Why Use SOLANA META SCANNER?</h3>
+    <h2>🔧 Features</h2>
     <ul>
-      <li>🧠 AI Wallet Summary (coming soon)</li>
-      <li>💼 Complete wallet portfolio scanner</li>
-      <li>📊 Visual portfolio breakdown with percentage</li>
-      <li>📈 Live SOL price chart</li>
-      <li>💵 Real USD token values</li>
-      <li>🔎 Token search & filter</li>
-      <li>🌗 Dark mode toggle</li>
-      <li>📁 CSV export support</li>
-      <li>📱 Fully responsive & mobile-first</li>
-      <li>🎨 Smooth animations & transitions</li>
-      <li>🧑‍💻 Open-source & GitHub hosted</li>
-      <li>🚀 Powered by Helius API</li>
+      <li>✅ Real-time wallet scan</li>
+      <li>✅ SOL and token USD values</li>
+      <li>✅ Portfolio donut chart</li>
+      <li>✅ SOL price chart (live)</li>
+      <li>✅ Search + filter tokens</li>
+      <li>✅ Export wallet tokens to CSV</li>
+      <li>✅ Dark mode for comfort</li>
+      <li>✅ Mobile-first responsive design</li>
+      <li>✅ Animated charts for data clarity</li>
+      <li>✅ No logos, 100% custom identity</li>
     </ul>
   </section>
 
   <footer>
-    <p>Built with ❤️ for the Solana ecosystem | <a href="https://github.com/h24-sol/glow-wallet-scanner" target="_blank">GitHub</a></p>
+    Built with ❤️ using Helius API — <a href="https://helius.xyz" target="_blank">Helius</a>
   </footer>
 
   <script src="script.js"></script>
