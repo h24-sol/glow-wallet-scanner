@@ -1,75 +1,34 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>🧠 GLOW Wallet Scanner</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      padding: 40px;
-      background: #111;
-      color: #0f0;
-    }
-    input, button {
-      padding: 10px;
-      margin: 10px 0;
-      font-size: 16px;
-    }
-    pre {
-      background: #222;
-      padding: 20px;
-      white-space: pre-wrap;
-    }
-  </style>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-  <h1>🧠 SOLANA META SCANNER</h1>
-  <p>Scan with style. Powered by $GLOW</p>
-  <input type="text" id="wallet" placeholder="Enter Solana Wallet Address" />
-  <button onclick="scanWallet()">🔍 Scan Wallet</button>
-  <pre id="result"></pre>
+  <header>
+    <h1>🧠 SOLANA META SCANNER</h1>
+    <p>Scan with style. Powered by <strong>$GLOW</strong></p>
+  </header>
 
-  <script>
-    async function scanWallet() {
-      const address = document.getElementById('wallet').value;
-      const result = document.getElementById('result');
-      result.textContent = "🔍 Scanning wallet...";
+  <main>
+    <input type="text" id="wallet" placeholder="Enter Solana Wallet Address" />
+    <button id="scanBtn">🔍 Scan Wallet</button>
+    <button id="exportBtn">📁 Export CSV</button>
+    <button id="darkToggle">🌓 Toggle Dark Mode</button>
+    <input type="text" id="searchInput" placeholder="🔎 Search Token" />
 
-      try {
-        // Fetch balances from Helius
-        const heliusRes = await fetch(`https://api.helius.xyz/v0/addresses/${address}/balances?api-key=c96a3c81-a711-4d05-8d98-19de7f38722b`);
-        const data = await heliusRes.json();
+    <section id="result">🔄 Awaiting scan...</section>
 
-        const tokens = data.tokens || [];
-        const nativeBalance = data.nativeBalance / 1e9; // Convert lamports to SOL
+    <canvas id="chart" width="400" height="400"></canvas>
+  </main>
 
-        // Fetch prices from CoinGecko
-        const priceRes = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd');
-        const prices = await priceRes.json();
-        const solPrice = prices.solana.usd;
+  <footer>
+    <p>Made with ❤️ for Solana users | GLOW Wallet Scanner</p>
+  </footer>
 
-        let totalUSD = nativeBalance * solPrice;
-        let display = `💰 Native SOL Balance: ${nativeBalance.toFixed(4)} SOL ($${(nativeBalance * solPrice).toFixed(2)})\n\n`;
-
-        if (tokens.length === 0) {
-          display += "No SPL tokens found.";
-        } else {
-          display += "🔹 Tokens:\n";
-          tokens.forEach(token => {
-            const amount = token.amount / (10 ** token.decimals);
-            display += `- Token Mint: ${token.mint}\n`;
-            display += `  Amount: ${amount.toFixed(4)}\n\n`;
-            // (Optional) Add custom price logic here if known token mints
-          });
-        }
-
-        display += `\n💎 Estimated Total Wallet Worth: ~$${totalUSD.toFixed(2)} USD`;
-
-        result.textContent = display;
-      } catch (error) {
-        result.textContent = "⚠️ Error scanning wallet. Please try again.";
-        console.error(error);
-      }
-    }
-  </script>
+  <script src="script.js"></script>
 </body>
 </html>
