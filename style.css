@@ -1,85 +1,87 @@
 body {
+  font-family: 'Segoe UI', sans-serif;
   margin: 0;
-  padding: 0;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background-color: #111;
-  color: #fff;
-  text-align: center;
+  background: url('https://cryptologos.cc/logos/solana-sol-logo.png') no-repeat center center fixed;
+  background-size: cover;
+  color: #ffffff;
+  transition: background 0.3s, color 0.3s;
 }
 
 .container {
-  padding: 20px;
-  max-width: 900px;
+  background-color: rgba(0, 0, 0, 0.85);
+  padding: 2rem;
+  max-width: 960px;
   margin: auto;
+  border-radius: 16px;
+  margin-top: 2rem;
+}
+
+h1.headline {
+  font-size: 3rem;
+  color: #00ffa3;
+  text-shadow: 2px 2px 5px #000;
+  font-weight: 900;
+  letter-spacing: 1px;
+  text-align: center;
+}
+
+.tagline {
+  font-weight: bold;
+  text-align: center;
+  margin-bottom: 2rem;
+  color: #ccc;
+}
+
+.tagline span {
+  color: #00ffa3;
 }
 
 input[type="text"] {
   padding: 10px;
-  width: 80%;
-  margin-bottom: 15px;
+  width: 100%;
+  margin: 10px 0;
   border: none;
-  border-radius: 8px;
-  font-size: 1rem;
+  border-radius: 5px;
 }
 
 .buttons {
-  margin-bottom: 15px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 1rem;
 }
 
 button {
-  margin: 5px;
-  padding: 10px 16px;
-  font-size: 1rem;
-  font-weight: bold;
+  flex: 1;
+  padding: 10px;
   background-color: #00ffa3;
-  border: none;
   color: #000;
-  border-radius: 8px;
+  border: none;
+  font-weight: bold;
+  border-radius: 5px;
   cursor: pointer;
-  transition: all 0.3s ease;
 }
 
 button:hover {
   background-color: #00cc88;
 }
 
-ul {
+ul#tokenList {
   list-style: none;
   padding: 0;
 }
 
-li {
-  background: #222;
-  margin: 10px auto;
+ul#tokenList li {
   padding: 10px;
-  border-radius: 8px;
-  width: 90%;
-  text-align: left;
-  font-size: 0.95rem;
+  border-bottom: 1px solid #444;
 }
 
 canvas {
-  background-color: #1c1c1c;
-  padding: 10px;
-  border-radius: 8px;
-  margin-bottom: 30px;
+  max-width: 100%;
+  margin: 1rem 0;
 }
 
-/* Dark mode toggle */
-body.dark {
-  background-color: #fafafa;
-  color: #111;
-}
-
-body.dark button {
+.dark-mode {
   background-color: #111;
-  color: #fff;
-}
-
-body.dark canvas {
-  background-color: #eee;
-}
-
-body.dark li {
-  background-color: #ddd;
+  color: #eee;
 }
