@@ -1,44 +1,41 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>🧠 SOLANA META SCANNER</title>
-  <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>🧠 GLOW Wallet Scanner</title>
+  <link rel="stylesheet" href="style.css"/>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
   <div class="container">
     <h1>🧠 SOLANA META SCANNER</h1>
-    <p class="subtitle">Scan with style. Powered by $GLOW</p>
+    <p>Scan with style. Powered by $GLOW</p>
 
-    <input type="text" id="walletInput" placeholder="Enter Solana Wallet Address">
+    <input id="walletInput" type="text" placeholder="Enter Solana Wallet Address" />
     <div class="buttons">
       <button onclick="scanWallet()">🔍 Scan Wallet</button>
       <button onclick="exportCSV()">📁 Export CSV</button>
       <button onclick="toggleDarkMode()">🌗 Toggle Dark Mode</button>
     </div>
+    <input id="searchInput" type="text" placeholder="🔎 Search Token" oninput="filterTokens()" />
 
-    <input type="text" id="searchInput" placeholder="🔎 Search Token" onkeyup="filterTokens()">
-
-    <div id="solPriceChart" class="chart-container">
-      <canvas id="priceChart"></canvas>
-    </div>
-
-    <div id="results">
-      <p id="nativeBalance">💰 Native SOL Balance: N/A</p>
-      <p id="totalValue">💎 Estimated Total Wallet Worth: ~N/A USD</p>
+    <div id="result">
+      <p id="walletAddress"></p>
+      <p id="solBalance"></p>
+      <p id="totalValue"></p>
+      <div id="tokenList"></div>
 
       <h3>📊 Portfolio Breakdown</h3>
-      <div class="chart-container"><canvas id="portfolioChart"></canvas></div>
+      <canvas id="portfolioChart" width="300" height="300"></canvas>
+
+      <h3>📉 SOL Price Chart</h3>
+      <canvas id="solPriceChart" width="600" height="300"></canvas>
 
       <h3>🧠 AI Wallet Summary</h3>
-      <p id="walletSummary">No data yet. Scan a wallet to generate summary.</p>
-
-      <h3>🔹 Tokens:</h3>
-      <ul id="tokenList"></ul>
+      <p id="walletSummary"></p>
     </div>
   </div>
-
   <script src="script.js"></script>
 </body>
 </html>
