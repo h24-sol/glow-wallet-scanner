@@ -5,42 +5,26 @@
   <style>
     body {
       font-family: Arial, sans-serif;
-      text-align: center;
       padding: 40px;
-      background-color: #0d1117;
-      color: #f0f6fc;
+      background: #111;
+      color: #0f0;
     }
-    input {
+    input, button {
       padding: 10px;
-      width: 300px;
+      margin: 10px 0;
       font-size: 16px;
-      border-radius: 8px;
-      border: none;
-    }
-    button {
-      padding: 10px 20px;
-      font-size: 16px;
-      margin-left: 10px;
-      background-color: #00ffae;
-      color: black;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
     }
     pre {
-      text-align: left;
-      background: #161b22;
+      background: #222;
       padding: 20px;
-      margin-top: 20px;
-      overflow: auto;
-      border-radius: 8px;
+      white-space: pre-wrap;
     }
   </style>
 </head>
 <body>
   <h1>🧠 SOLANA META SCANNER</h1>
   <p>Scan with style. Powered by $GLOW</p>
-  <input type="text" id="wallet" placeholder="Enter Solana Wallet Address">
+  <input type="text" id="wallet" placeholder="Enter Solana Wallet Address" />
   <button onclick="scanWallet()">🔍 Scan Wallet</button>
   <pre id="result"></pre>
 
@@ -48,13 +32,42 @@
     async function scanWallet() {
       const address = document.getElementById('wallet').value;
       const result = document.getElementById('result');
-      result.textContent = "🔄 Scanning...";
+      result.textContent = "🔍 Scanning wallet...";
+
       try {
-        const res = await fetch(`https://api.helius.xyz/v0/addresses/${address}/balances?api-key=c96a3c81-a711-4d05-8d98-19de7f38722b`);
-        const data = await res.json();
-        result.textContent = JSON.stringify(data, null, 2);
+        // Fetch balances from Helius
+        const heliusRes = await fetch(`https://api.helius.xyz/v0/addresses/${address}/balances?api-key=c96a3c81-a711-4d05-8d98-19de7f38722b`);
+        const data = await heliusRes.json();
+
+        const tokens = data.tokens || [];
+        const nativeBalance = data.nativeBalance / 1e9; // Convert lamports to SOL
+
+        // Fetch prices from CoinGecko
+        const priceRes = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd');
+        const prices = await priceRes.json();
+        const solPrice = prices.solana.usd;
+
+        let totalUSD = nativeBalance * solPrice;
+        let display = `💰 Native SOL Balance: ${nativeBalance.toFixed(4)} SOL ($${(nativeBalance * solPrice).toFixed(2)})\n\n`;
+
+        if (tokens.length === 0) {
+          display += "No SPL tokens found.";
+        } else {
+          display += "🔹 Tokens:\n";
+          tokens.forEach(token => {
+            const amount = token.amount / (10 ** token.decimals);
+            display += `- Token Mint: ${token.mint}\n`;
+            display += `  Amount: ${amount.toFixed(4)}\n\n`;
+            // (Optional) Add custom price logic here if known token mints
+          });
+        }
+
+        display += `\n💎 Estimated Total Wallet Worth: ~$${totalUSD.toFixed(2)} USD`;
+
+        result.textContent = display;
       } catch (error) {
-        result.textContent = "⚠️ Error fetching data. Please check wallet address or try again.";
+        result.textContent = "⚠️ Error scanning wallet. Please try again.";
+        console.error(error);
       }
     }
   </script>
