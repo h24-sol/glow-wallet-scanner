@@ -2,24 +2,24 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>🟩 SOLANA META SCANNER</title>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="style.css"/>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
   <div class="container">
-    <h1 style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-weight: 900; color: #00ffa3; font-size: 3.2rem; text-shadow: 2px 2px 4px #000; letter-spacing: 1px;">🟩 SOLANA META SCANNER</h1>
-    <p class="tagline" style="font-family: Arial, sans-serif; font-weight: bold; color: #ccc; font-size: 1.1rem; margin-bottom: 1.5rem;">Scan with style. Powered by <span style="color:#00ffa3; font-weight: bold">$GLOW</span></p>
+    <h1 class="headline">🟩 SOLANA META SCANNER</h1>
+    <p class="tagline">Scan with style. Powered by <span>$GLOW</span></p>
 
-    <input type="text" id="walletInput" placeholder="Enter Solana Wallet Address" />
+    <input type="text" id="walletInput" placeholder="Enter Solana Wallet Address"/>
     <div class="buttons">
       <button onclick="scanWallet()">🔍 Scan Wallet</button>
       <button onclick="exportToCSV()">📁 Export CSV</button>
       <button onclick="toggleDarkMode()">🌗 Toggle Dark Mode</button>
     </div>
 
-    <input type="text" id="tokenSearch" onkeyup="filterTokens()" placeholder="🔎 Search Token" />
+    <input type="text" id="tokenSearch" onkeyup="filterTokens()" placeholder="🔎 Search Token"/>
 
     <div id="walletInfo">
       <p id="nativeBalance">💰 Native SOL Balance: Loading...</p>
@@ -32,7 +32,7 @@
     </div>
 
     <div id="portfolioChartSection">
-      <h2>📊 Portfolio Breakdown <span style="font-size: 0.8rem; color: #aaa;">(Token Name & Value %)</span></h2>
+      <h2>📊 Portfolio Breakdown <span>(Token Name & Value %)</span></h2>
       <canvas id="portfolioChart"></canvas>
     </div>
 
@@ -46,7 +46,6 @@
       <p id="aiSummary">AI summary loading...</p>
     </div>
   </div>
-
   <script src="script.js"></script>
 </body>
 </html>
