@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>🧠 GLOW Wallet Scanner</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding: 40px;
+      background-color: #0d1117;
+      color: #f0f6fc;
+    }
+    input {
+      padding: 10px;
+      width: 300px;
+      font-size: 16px;
+      border-radius: 8px;
+      border: none;
+    }
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      margin-left: 10px;
+      background-color: #00ffae;
+      color: black;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    pre {
+      text-align: left;
+      background: #161b22;
+      padding: 20px;
+      margin-top: 20px;
+      overflow: auto;
+      border-radius: 8px;
+    }
+  </style>
+</head>
+<body>
+  <h1>🧠 SOLANA META SCANNER</h1>
+  <p>Scan with style. Powered by $GLOW</p>
+  <input type="text" id="wallet" placeholder="Enter Solana Wallet Address">
+  <button onclick="scanWallet()">🔍 Scan Wallet</button>
+  <pre id="result"></pre>
+
+  <script>
+    async function scanWallet() {
+      const address = document.getElementById('wallet').value;
+      const result = document.getElementById('result');
+      result.textContent = "🔄 Scanning...";
+      try {
+        const res = await fetch(`https://api.helius.xyz/v0/addresses/${address}/balances?api-key=c96a3c81-a711-4d05-8d98-19de7f38722b`);
+        const data = await res.json();
+        result.textContent = JSON.stringify(data, null, 2);
+      } catch (error) {
+        result.textContent = "⚠️ Error fetching data. Please check wallet address or try again.";
+      }
+    }
+  </script>
+</body>
+</html>
