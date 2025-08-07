@@ -1,116 +1,87 @@
-/* Reset some default styles */
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+  font-family: "Segoe UI", sans-serif;
 }
 
 body {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background-color: #0f172a;
-  color: #f8fafc;
-  line-height: 1.6;
+  background: #0f0f0f;
+  color: #ffffff;
   padding: 20px;
-}
-
-/* Header */
-header {
   text-align: center;
-  margin-bottom: 30px;
 }
 
 header h1 {
-  font-size: 2.5rem;
-  color: #38bdf8;
+  font-size: 2.2em;
+  margin-bottom: 10px;
 }
 
 header p {
-  font-size: 1rem;
-  color: #94a3b8;
-}
-
-/* Scanner input */
-.scanner {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
+  font-size: 1em;
   margin-bottom: 30px;
+  color: #ffcc00;
 }
 
 .scanner input {
-  width: 90%;
-  max-width: 500px;
-  padding: 12px;
+  padding: 10px;
+  width: 60%;
+  max-width: 400px;
   border: none;
-  border-radius: 8px;
-  font-size: 1rem;
-  outline: none;
+  border-radius: 6px;
+  margin-right: 10px;
 }
 
 .scanner button {
-  background-color: #38bdf8;
-  color: #0f172a;
-  padding: 10px 20px;
-  font-size: 1rem;
+  padding: 10px 15px;
+  background-color: #ffcc00;
   border: none;
-  border-radius: 8px;
+  border-radius: 6px;
   cursor: pointer;
-  transition: background 0.3s;
+  font-weight: bold;
 }
 
-.scanner button:hover {
-  background-color: #0ea5e9;
-}
-
-/* Results Section */
 .results {
-  padding: 20px;
-  background-color: #1e293b;
-  border-radius: 12px;
-  max-width: 900px;
-  margin: 0 auto 40px;
-  box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+  margin-top: 30px;
 }
 
-/* About section */
+.results table {
+  margin: 0 auto;
+  border-collapse: collapse;
+  width: 90%;
+  max-width: 700px;
+}
+
+.results th,
+.results td {
+  border: 1px solid #444;
+  padding: 10px;
+}
+
+.results img {
+  vertical-align: middle;
+  margin-right: 8px;
+}
+
 .about {
+  margin-top: 40px;
+  text-align: left;
   max-width: 800px;
-  margin: 0 auto 40px;
-}
-
-.about h2 {
-  font-size: 1.5rem;
-  color: #facc15;
-  margin-bottom: 15px;
-  text-align: center;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .about ul {
   list-style: none;
-  padding: 0;
+  padding-left: 0;
 }
 
 .about li {
-  padding: 10px;
-  border-bottom: 1px solid #334155;
+  padding: 5px 0;
 }
 
-/* Footer */
 footer {
-  text-align: center;
-  font-size: 0.9rem;
-  color: #94a3b8;
-  margin-top: 30px;
-}
-
-/* Responsive */
-@media (max-width: 600px) {
-  .scanner input {
-    width: 95%;
-  }
-
-  .about h2 {
-    font-size: 1.3rem;
-  }
+  margin-top: 40px;
+  font-size: 0.9em;
+  color: #888;
 }
