@@ -1,54 +1,72 @@
 body {
   font-family: 'Segoe UI', sans-serif;
+  background-color: #f9f9f9;
+  color: #222;
   margin: 0;
-  padding: 0;
-  background-color: #fefefe;
-  color: #111;
-  transition: background 0.3s, color 0.3s;
+  padding: 20px;
+  transition: background-color 0.3s, color 0.3s;
 }
+
+body.dark-mode {
+  background-color: #121212;
+  color: #eee;
+}
+
 .container {
   max-width: 800px;
   margin: auto;
-  padding: 20px;
+  text-align: center;
 }
-h1 {
-  font-size: 2em;
-  margin-bottom: 0.2em;
-}
+
 input[type="text"] {
-  width: 100%;
   padding: 10px;
-  margin: 10px 0;
+  margin: 10px;
+  width: 80%;
+  max-width: 500px;
+  font-size: 16px;
 }
+
 button {
+  padding: 10px 16px;
   margin: 5px;
-  padding: 10px 15px;
-  font-size: 1em;
+  font-size: 15px;
   cursor: pointer;
-  border-radius: 8px;
   border: none;
-  background: #4a90e2;
+  border-radius: 6px;
+  background-color: #5c6bc0;
   color: white;
+  transition: background-color 0.2s;
 }
-.button-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
+
+button:hover {
+  background-color: #3f51b5;
 }
+
 ul {
   list-style-type: none;
   padding: 0;
+  margin-top: 15px;
 }
-.dark-mode {
-  background-color: #111;
-  color: #eee;
+
+li {
+  background: #e3e3e3;
+  margin: 5px 0;
+  padding: 10px;
+  border-radius: 4px;
+  text-align: left;
 }
-.dark-mode input,
-.dark-mode button {
-  background-color: #333;
-  color: #eee;
+
+body.dark-mode li {
+  background: #333;
 }
-canvas {
-  max-width: 100%;
-  margin-top: 20px;
+
+.subtitle {
+  font-style: italic;
+  margin-top: -10px;
+  margin-bottom: 20px;
+}
+
+.chart-container {
+  max-width: 600px;
+  margin: 20px auto;
 }
