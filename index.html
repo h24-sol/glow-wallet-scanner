@@ -4,38 +4,44 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>🧠 GLOW Wallet Scanner</title>
-  <link rel="stylesheet" href="style.css"/>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <div class="container">
     <h1>🧠 SOLANA META SCANNER</h1>
-    <p>Scan with style. Powered by $GLOW</p>
-
-    <input id="walletInput" type="text" placeholder="Enter Solana Wallet Address" />
-    <div class="buttons">
+    <p class="subtitle">Scan with style. Powered by $GLOW</p>
+    <input type="text" id="walletInput" placeholder="Enter wallet address">
+    <div class="button-row">
       <button onclick="scanWallet()">🔍 Scan Wallet</button>
       <button onclick="exportCSV()">📁 Export CSV</button>
       <button onclick="toggleDarkMode()">🌗 Toggle Dark Mode</button>
     </div>
-    <input id="searchInput" type="text" placeholder="🔎 Search Token" oninput="filterTokens()" />
-
+    <input type="text" id="searchInput" placeholder="🔎 Search Token" onkeyup="searchToken()"/>
+    
     <div id="result">
-      <p id="walletAddress"></p>
-      <p id="solBalance"></p>
-      <p id="totalValue"></p>
+      <p id="nativeBalance"></p>
       <div id="tokenList"></div>
+      <p id="totalWorth"></p>
 
-      <h3>📊 Portfolio Breakdown</h3>
-      <canvas id="portfolioChart" width="300" height="300"></canvas>
+      <div id="charts">
+        <div>
+          <h3>📊 Portfolio Breakdown</h3>
+          <canvas id="portfolioChart"></canvas>
+        </div>
+        <div>
+          <h3>📉 SOL Price Chart</h3>
+          <canvas id="solPriceChart"></canvas>
+        </div>
+      </div>
 
-      <h3>📉 SOL Price Chart</h3>
-      <canvas id="solPriceChart" width="600" height="300"></canvas>
-
-      <h3>🧠 AI Wallet Summary</h3>
-      <p id="walletSummary"></p>
+      <div id="aiSummary">
+        <h3>🧠 AI Wallet Summary</h3>
+        <p id="summaryText">AI summary loading...</p>
+      </div>
     </div>
   </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="script.js"></script>
 </body>
 </html>
