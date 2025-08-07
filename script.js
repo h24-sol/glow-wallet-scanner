@@ -1,33 +1,111 @@
-async function scanWallet() {
-  const walletAddress = document.getElementById('walletInput').value.trim();
-  const resultsDiv = document.getElementById('results');
+const HELIUS_API_KEY = "a711-4d05-8d98-19de7f38722b";
 
-  if (!walletAddress) {
-    resultsDiv.innerHTML = '<p>Please enter a wallet address.</p>';
+// Minimal token mint to Coingecko ID map (expand as needed)
+const mintToCoingecko = {
+  "So11111111111111111111111111111111111111112": "solana",
+  "Es9vMFrzaCERWLzWfpHoUFR6Jxgxewqksx5FiNfAuVQ": "usd-coin",
+  "9n4nbM75f5Ui33ZbPYXn59EwSgE8CGsHtAeTH5YFeJ9E": "bitcoin",
+};
+
+async function getWalletAssets(walletAddress) {
+  const url = `https://mainnet.helius-rpc.com/?api-key=${HELIUS_API_KEY}`;
+  const body = {
+    jsonrpc: "2.0",
+    id: "searchAssets",
+    method: "searchAssets",
+    params: {
+      ownerAddress: walletAddress,
+      tokenType: "fungible",
+      displayOptions: { showNativeBalance: true }
+    }
+  };
+
+  const response = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body)
+  });
+
+  const data = await response.json();
+  if(data.error) throw new Error(data.error.message);
+  return data.result;
+}
+
+async function getTokenPriceCoingecko(tokenId) {
+  const url = `https://api.coingecko.com/api/v3/simple/price?ids=${tokenId}&vs_currencies=usd`;
+  const res = await fetch(url);
+  const data = await res.json();
+  return data[tokenId]?.usd || 0;
+}
+
+async function scanWallet() {
+  const walletInput = document.getElementById("walletInput").value.trim();
+  const statusDiv = document.getElementById("status");
+  const resultsDiv = document.getElementById("results");
+  resultsDiv.innerHTML = "";
+  statusDiv.textContent = "";
+
+  if (!walletInput) {
+    statusDiv.textContent = "Please enter a valid Solana wallet address.";
     return;
   }
 
-  resultsDiv.innerHTML = '<p>Loading wallet data...</p>';
+  statusDiv.textContent = "Fetching wallet assets, please wait...";
 
   try {
-    const response = await fetch(`https://api.helius.xyz/v0/addresses/${walletAddress}/balances?api-key=c96a3c81-a711-4d05-8d98-19de7f38722b`);
-    const data = await response.json();
+    const assets = await getWalletAssets(walletInput);
 
-    if (!data.tokens || data.tokens.length === 0) {
-      resultsDiv.innerHTML = '<p>No tokens found in this wallet.</p>';
+    if (!assets || assets.length === 0) {
+      statusDiv.textContent = "No assets found or invalid wallet address.";
       return;
     }
 
-    let html = `<h2>Wallet Overview</h2>`;
-    html += '<table><tr><th>Token</th><th>Amount</th><th>Symbol</th></tr>';
+    let totalValue = 0;
+    let rows = "";
 
-    data.tokens.forEach(token => {
-      html += `<tr><td><img src="${token.logo || ''}" width="20"/> ${token.name || 'Unknown'}</td><td>${token.amount}</td><td>${token.symbol || ''}</td></tr>`;
-    });
+    for (const token of assets) {
+      const mint = token.mint;
+      const decimals = token.decimals;
+      const amountRaw = Number(token.amount || 0);
+      const amount = amountRaw / (10 ** decimals);
 
-    html += '</table>';
-    resultsDiv.innerHTML = html;
+      const coingeckoId = mintToCoingecko[mint];
+
+      let price = 0;
+      if (coingeckoId) {
+        price = await getTokenPriceCoingecko(coingeckoId);
+      }
+
+      const usdValue = amount * price;
+      totalValue += usdValue;
+
+      rows += `
+        <tr>
+          <td>${token.symbol || "UNKNOWN"}</td>
+          <td>${amount.toFixed(6)}</td>
+          <td>$${price.toFixed(4)}</td>
+          <td>$${usdValue.toFixed(2)}</td>
+        </tr>
+      `;
+    }
+
+    statusDiv.textContent = `Total Wallet Value: $${totalValue.toFixed(2)}`;
+
+    resultsDiv.innerHTML = `
+      <table>
+        <thead>
+          <tr>
+            <th>Token</th>
+            <th>Amount</th>
+            <th>Price (USD)</th>
+            <th>Value (USD)</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+    `;
+
   } catch (err) {
-    resultsDiv.innerHTML = `<p>Error fetching wallet data. Please check the address and try again.</p>`;
+    statusDiv.textContent = "Error fetching wallet data: " + err.message;
   }
 }
