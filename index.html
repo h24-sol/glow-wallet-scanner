@@ -1,28 +1,41 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Solana Wallet Scanner ($GLOW)</title>
-  <link rel="stylesheet" href="style.css">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <div class="container">
     <h1>Solana Wallet Scanner ($GLOW)</h1>
     <p>Paste a Solana wallet address below and click Scan Wallet:</p>
-
-    <input type="text" id="walletInput" placeholder="Paste Solana wallet address here">
+    <input type="text" id="walletAddress" placeholder="Paste Solana wallet address here"/>
     <button onclick="scanWallet()">Scan Wallet</button>
+    <div id="error" class="error"></div>
 
-    <div id="result"></div>
+    <div class="result-section">
+      <h2>Wallet Info</h2>
+      <p><strong>Creation Date:</strong> <span id="creationDate">-</span></p>
+      <p><strong>Total Volume:</strong> <span id="totalVolume">-</span></p>
+      <p><strong>Burned Token Count:</strong> <span id="burnedCount">-</span></p>
+      <p><strong>Smart Wallet:</strong> <span id="smartWallet">-</span></p>
+      <p><strong>AI Summary:</strong> <span id="aiSummary">-</span></p>
+    </div>
 
-    <h2>Live SOL Price Chart</h2>
-    <canvas id="solPriceChart"></canvas>
+    <div class="chart-section">
+      <h2>Live SOL Price Chart</h2>
+      <iframe src="https://www.tradingview.com/embed-widget/mini-symbol-overview/?symbol=BINANCE:SOLUSDT&locale=en" width="100%" height="200" frameborder="0"></iframe>
+    </div>
 
-    <h2>Token Holdings Pie Chart</h2>
-    <canvas id="holdingsChart"></canvas>
+    <div class="chart-section">
+      <h2>Token Holdings Pie Chart</h2>
+      <canvas id="tokenPieChart" width="400" height="400"></canvas>
+    </div>
   </div>
 
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="script.js"></script>
 </body>
 </html>
