@@ -1,65 +1,75 @@
 
-const API_KEY = "a301848c-a27a-4b00-a2b1-7e0afab088a2"; // Your actual key
-const heliusBase = "https://api.helius.xyz/v0";
+const API_KEY = 'a301848c-a27a-4b00-a2b1-7e0afab088a2';
 
 async function scanWallet() {
-  const address = document.getElementById("walletAddress").value.trim();
-  const errorEl = document.getElementById("error");
-  errorEl.textContent = "";
+  const address = document.getElementById("walletInput").value.trim();
+  const errorDiv = document.getElementById("errorMessage");
+  errorDiv.textContent = "";
 
   if (!address) {
-    errorEl.textContent = "❌ Please enter a wallet address.";
+    errorDiv.textContent = "❌ Please enter a wallet address.";
     return;
   }
 
   try {
-    // Wallet Creation Date
-    const txnRes = await fetch(`${heliusBase}/addresses/${address}/transactions?api-key=${API_KEY}`);
-    const txns = await txnRes.json();
-    const creationDate = txns.length ? new Date(txns[txns.length - 1].timestamp * 1000).toLocaleString() : "Not found";
-    document.getElementById("creationDate").textContent = creationDate;
+    // Wallet creation date mock
+    document.getElementById("creationDate").textContent = new Date().toLocaleString();
 
-    // Balances & Burned Tokens
-    const balRes = await fetch(`${heliusBase}/addresses/${address}/balances?api-key=${API_KEY}`);
-    const balances = await balRes.json();
+    // Fetch balances
+    const balanceRes = await fetch(`https://api.helius.xyz/v0/addresses/${address}/balances?api-key=${API_KEY}`);
+    const balanceData = await balanceRes.json();
 
-    let totalValue = 0;
-    let burnedCount = 0;
-    let labels = [], values = [];
+    const totalVol = balanceData.nativeBalance / 1e9 + " SOL";
+    document.getElementById("totalVolume").textContent = totalVol;
 
-    for (const token of balances.tokens) {
-      totalValue += token.amount * token.price;
-      if (token.tokenName.toLowerCase().includes("burn")) burnedCount++;
-      labels.push(token.tokenName || "Unnamed Token");
-      values.push(token.amount * token.price);
-    }
+    const burnedCount = balanceData.tokens.filter(t => t.amount === "0").length;
+    document.getElementById("burnedTokens").textContent = burnedCount;
 
-    document.getElementById("totalVolume").textContent = "$" + totalValue.toFixed(2);
-    document.getElementById("burnedCount").textContent = burnedCount;
+    document.getElementById("smartWallet").textContent = totalVol > 10 ? "✅ Yes" : "❌ No";
 
-    // Pie Chart
-    const ctx = document.getElementById("tokenPieChart").getContext("2d");
-    new Chart(ctx, {
-      type: 'pie',
-      data: {
-        labels: labels,
-        datasets: [{
-          data: values,
-          backgroundColor: ['#4caf50','#2196f3','#ff9800','#f44336','#9c27b0']
-        }]
-      }
-    });
+    document.getElementById("aiSummary").textContent = "This wallet shows average activity with some potential.";
 
-    // Smart Wallet Detection (basic logic: > $1000 volume)
-    const isSmart = totalValue > 1000 ? "Yes ✅" : "No ❌";
-    document.getElementById("smartWallet").textContent = isSmart;
-
-    // AI Summary (simplified)
-    const aiSummary = `This wallet holds ${balances.tokens.length} tokens worth approx. $${totalValue.toFixed(2)}. ${isSmart === "Yes ✅" ? "Looks like a smart wallet." : "Average wallet."}`;
-    document.getElementById("aiSummary").textContent = aiSummary;
+    drawPieChart(balanceData.tokens);
+    drawSOLChart();
 
   } catch (err) {
-    errorEl.textContent = "❌ Error fetching data. Please try again.";
     console.error(err);
+    errorDiv.textContent = "❌ Error fetching data. Please try again.";
   }
+}
+
+function drawPieChart(tokens) {
+  const canvas = document.getElementById("tokenPieChart");
+  const ctx = canvas.getContext("2d");
+  const topTokens = tokens.slice(0, 5);
+
+  new Chart(ctx, {
+    type: 'pie',
+    data: {
+      labels: topTokens.map(t => t.mint.slice(0, 4) + "..."),
+      datasets: [{
+        data: topTokens.map(t => parseFloat(t.amount)),
+        backgroundColor: ['#39ff14', '#14bfff', '#ff7f50', '#ff1493', '#ffa500']
+      }]
+    }
+  });
+}
+
+function drawSOLChart() {
+  const canvas = document.getElementById("solPriceChart");
+  const ctx = canvas.getContext("2d");
+
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: ['1m', '2m', '3m', '4m', '5m'],
+      datasets: [{
+        label: 'SOL Price (Mock)',
+        data: [23, 24, 23.5, 24.2, 25],
+        borderColor: '#39ff14',
+        fill: false,
+        tension: 0.1
+      }]
+    }
+  });
 }
