@@ -1,35 +1,58 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Solana Wallet Scanner ($GLOW)</title>
-  <link rel="stylesheet" href="style.css" />
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Solana Wallet Scanner ($GLOW)</title>
+<link rel="stylesheet" href="style.css" />
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-  <div class="container">
-    <h1>Solana Wallet Scanner <span class="glow">($GLOW)</span></h1>
-    <p class="tagline">Explore your wallet like never before ✨</p>
-    <input type="text" id="walletInput" placeholder="Paste Solana wallet address here" />
-    <button onclick="scanWallet()">🚀 Scan Wallet</button>
-    <div id="errorMessage" class="error"></div>
-    <div id="walletInfo" class="info-section">
-      <h2>Wallet Info</h2>
-      <p><strong>Creation Date:</strong> <span id="creationDate">-</span></p>
-      <p><strong>Total Volume:</strong> <span id="totalVolume">-</span></p>
-      <p><strong>Burned Token Count:</strong> <span id="burnedTokens">-</span></p>
-      <p><strong>Smart Wallet:</strong> <span id="smartWallet">-</span></p>
-      <p><strong>AI Summary:</strong> <span id="aiSummary">-</span></p>
-    </div>
-    <div class="charts">
-      <h2>Live SOL Price Chart</h2>
-      <canvas id="solPriceChart" width="400" height="200"></canvas>
-      <h2>Token Holdings Pie Chart</h2>
-      <canvas id="tokenPieChart" width="400" height="200"></canvas>
-    </div>
-  </div>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <main class="app">
+    <header class="hero">
+      <h1>Solana Wallet Scanner <span class="tag">($GLOW)</span></h1>
+      <p class="sub">Explore wallets with aura — hot, sexy, cute & attractive ✨</p>
+    </header>
+
+    <section class="search">
+      <input id="walletInput" placeholder="Paste Solana wallet address here" spellcheck="false" />
+      <button id="scanBtn">🚀 Scan Wallet</button>
+      <div id="status" class="status"></div>
+    </section>
+
+    <section class="cards" id="cards" aria-live="polite">
+      <div class="card">
+        <h3>Wallet Info</h3>
+        <p><strong>Address:</strong> <span id="outAddress">-</span></p>
+        <p><strong>Creation Date:</strong> <span id="creationDate">-</span></p>
+        <p><strong>Total Volume (SOL):</strong> <span id="totalVolume">-</span></p>
+        <p><strong>Burned Tokens:</strong> <span id="burnedCount">-</span></p>
+        <p><strong>Smart Wallet:</strong> <span id="smartWallet">-</span></p>
+      </div>
+
+      <div class="card wide">
+        <h3>AI Summary</h3>
+        <p id="aiSummary">-</p>
+      </div>
+    </section>
+
+    <section class="charts">
+      <div class="chartCard">
+        <h3>Live SOL Price Chart</h3>
+        <canvas id="solChart"></canvas>
+      </div>
+      <div class="chartCard">
+        <h3>Token Holdings Pie Chart</h3>
+        <canvas id="pieChart"></canvas>
+      </div>
+    </section>
+
+    <footer class="footer">
+      <small>Developed by MANISH • <span id="version">v1.0</span></small>
+    </footer>
+  </main>
+
   <script src="script.js"></script>
 </body>
 </html>
